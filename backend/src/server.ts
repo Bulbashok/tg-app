@@ -2,12 +2,17 @@
 //   • grammY long-polling (no public webhook/TLS setup needed)
 //   • Express HTTP server  (health check + student-score alerts from the Mini App)
 import express from "express";
+import cors from "cors";
 import { env } from "./env.js";
 import { bot, alertTeacher } from "./bot.js";
 import { verifyInitData } from "./telegramAuth.js";
 import { supabase } from "./supabase.js";
 
 const app = express();
+// The Mini App (Vercel origin) calls /api/submit with a custom header
+// (x-tg-init-data) -> browser sends a CORS preflight first. Security does NOT
+// rely on CORS here: every request is still HMAC-verified via initData.
+app.use(cors({ maxAge: 3600 }));
 app.use(express.json({ limit: "32kb" })); // tiny payloads only -> cheap DoS guard
 
 // Render health check target.
