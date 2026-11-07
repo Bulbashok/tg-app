@@ -1,15 +1,19 @@
-// Groq (Llama Vision) integration: image URL -> strict exercise JSON.
-import Groq from 'groq-sdk';
+// AI vision integration via any OpenAI-compatible provider.
+// Default: Groq + qwen/qwen3.8-27b (Groq's current vision model — the Llama
+// vision models were removed). Provider is fully configurable via
+// AI_BASE_URL / AI_API_KEY / AI_MODEL (e.g. OpenRouter as an alternative).
+// image URL -> strict exercise JSON.
+import OpenAI from 'openai';
 import { env } from './env.js';
 import { parseExerciseDraft, type ExerciseRow } from './types.js';
 
-// Optional: route only Groq traffic through a proxy (HTTPS_PROXY / HTTP_PROXY
-// in .env). Needed for local development from regions Groq blocks at its
-// edge; on Render the service runs in the US, so leave it unset there.
-// Implemented as a custom fetch with an undici ProxyAgent dispatcher,
-// because Node's built-in fetch ignores httpAgent.
+// Optional: route only AI traffic through a proxy (HTTPS_PROXY / HTTP_PROXY
+// in .env). Useful for local development from blocked regions; on Render and
+// OpenRouter it is not needed. Implemented as a custom fetch with an undici
+// ProxyAgent dispatcher, because Node's built-in fetch ignores httpAgent.
+type ClientOptions = ConstructorParameters<typeof OpenAI>[0];
+let clientOpts: ClientOptions = { apiKey: env.aiApiKey, baseURL: env.aiBaseUrl };
 const proxyUrl = process.env.HTTPS_PROXY ?? process.env.HTTP_PROXY;
-let clientOpts: ConstructorParameters<typeof Groq>[0] = { apiKey: env.groqApiKey };
 if (proxyUrl) {
   const { fetch: undiciFetch, ProxyAgent } = await import('undici');
   const dispatcher = new ProxyAgent(proxyUrl);
@@ -18,7 +22,7 @@ if (proxyUrl) {
   clientOpts = { ...clientOpts, fetch: proxiedFetch as never };
 }
 
-const groq = new Groq(clientOpts);
+const ai = new OpenAI(clientOpts);
 
 // Predefined system prompt: forces a machine-checkable JSON contract.
 const SYSTEM_PROMPT = `You are an exercise generator for an English-language textbook.
@@ -51,13 +55,28 @@ Rules:
 - Answers must be unambiguous single strings (case-insensitive comparison later).
 - Output must be valid JSON parseable by JSON.parse.`;
 
-/** Send the stored image to Llama Vision and return a validated exercise draft. */
+/** Tolerant JSON extraction: models sometimes wrap output in fences/prose. */
+function extractJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end <= start) {
+      throw new Error(`Model did not return JSON. Raw reply:\n${text.slice(0, 300)}`);
+    }
+    return JSON.parse(text.slice(start, end + 1));
+  }
+}
+
+/** Send the stored image to the vision model and return a validated draft. */
 export async function parseImageToExercise(imageUrl: string): Promise<ExerciseRow> {
-  const completion = await groq.chat.completions.create({
-    model: env.groqModel,
+  const completion = await ai.chat.completions.create({
+    model: env.aiModel,
     temperature: 0.2, // deterministic structure > creativity here
-    max_tokens: 2048,
-    response_format: { type: 'json_object' }, // Groq JSON mode
+    // max_completion_tokens is the current field (max_tokens is deprecated
+    // on Groq, and required-style variants apply to reasoning models).
+    max_completion_tokens: 4096,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {
@@ -71,8 +90,8 @@ export async function parseImageToExercise(imageUrl: string): Promise<ExerciseRo
   });
 
   const raw = completion.choices[0]?.message?.content;
-  if (!raw) throw new Error('Groq returned an empty response');
+  if (!raw) throw new Error('The model returned an empty response');
 
-  // Throws ZodError if the model deviated from the contract — caller shows it to the teacher.
-  return parseExerciseDraft(JSON.parse(raw));
+  // Throws if the model deviated from the contract — caller shows it to the teacher.
+  return parseExerciseDraft(extractJson(raw));
 }

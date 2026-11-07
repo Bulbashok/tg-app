@@ -1,5 +1,5 @@
 // Score banner shown after "Проверить": score, per-error recap, teacher alert status.
-import type { SubmissionResult } from '../types';
+import type { SubmissionResult } from "../types";
 
 interface Props {
   result: SubmissionResult;
@@ -9,12 +9,13 @@ interface Props {
 
 export default function ResultBanner({ result, notified, notifyError }: Props) {
   const pct = result.total ? result.correct / result.total : 0;
-  const tone = pct === 1 ? 'perfect' : pct >= 0.6 ? 'good' : 'bad';
+  const tone = pct === 1 ? "perfect" : pct >= 0.6 ? "good" : "bad";
 
   return (
     <div className={`result result--${tone}`}>
       <div className="result__score">
-        🏆 {result.score} <span className="result__pct">({Math.round(pct * 100)}%)</span>
+        🏆 {result.score}{" "}
+        <span className="result__pct">({Math.round(pct * 100)}%)</span>
       </div>
       {result.errors.length > 0 && (
         <ul className="result__errors">
@@ -27,10 +28,10 @@ export default function ResultBanner({ result, notified, notifyError }: Props) {
       )}
       <p className="result__status">
         {notified
-          ? '✅ Результат сохранён и отправлен преподавателю'
+          ? "✅ Результат сохранён и отправлен преподавателю"
           : notifyError
-            ? '⚠️ Не удалось отправить. Проверьте соединение и попробуйте снова.'
-            : '⏳ Отправка результата…'}
+            ? "⚠️ Не удалось отправить. Проверьте соединение и попробуйте снова."
+            : "⏳ Отправка результата…"}
       </p>
     </div>
   );

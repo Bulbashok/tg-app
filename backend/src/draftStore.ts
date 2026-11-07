@@ -3,8 +3,8 @@
 // (Telegram limits callback_data to 164 bytes, so we can't carry the JSON).
 // Entries expire after 30 minutes; on Render restart pending drafts are lost,
 // which is acceptable — the teacher simply re-sends the photo.
-import { randomUUID } from 'node:crypto';
-import type { ExerciseRow } from './types.js';
+import { randomUUID } from "node:crypto";
+import type { ExerciseRow } from "./types.js";
 
 interface Entry {
   draft: ExerciseRow;

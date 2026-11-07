@@ -12,42 +12,57 @@ import type {
   SortingContent,
   SubmissionResult,
   ErrorDetail,
-} from '../types';
+} from "../types";
 
 export type Answers = Record<string, string>;
 
-const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 
-export function scoreExercise(exercise: Exercise, answers: Answers): SubmissionResult {
+export function scoreExercise(
+  exercise: Exercise,
+  answers: Answers,
+): SubmissionResult {
   const errors: ErrorDetail[] = [];
   let correct = 0;
   let total = 0;
 
   switch (exercise.task_type) {
-    case 'gap-fill': {
+    case "gap-fill": {
       const c = exercise.content as GapFillContent;
       for (const gap of c.gaps) {
         total++;
-        const your = answers[`gap-${gap.id}`] ?? '';
+        const your = answers[`gap-${gap.id}`] ?? "";
         if (norm(your) === norm(gap.answer)) correct++;
-        else errors.push({ taskId: gap.id, your: your || '—', correct: gap.answer });
+        else
+          errors.push({
+            taskId: gap.id,
+            your: your || "—",
+            correct: gap.answer,
+          });
       }
       break;
     }
-    case 'matching': {
+    case "matching": {
       const c = exercise.content as MatchingContent;
       for (const pair of c.pairs) {
         total++;
         const chosen = answers[`en-${pair.id}`]; // russian item id
-        const yourLabel = c.pairs.find((p) => String(p.id) === chosen)?.russian ?? '—';
+        const yourLabel =
+          c.pairs.find((p) => String(p.id) === chosen)?.russian ?? "—";
         if (chosen === String(pair.id)) correct++;
-        else errors.push({ taskId: pair.id, your: yourLabel, correct: pair.russian });
+        else
+          errors.push({
+            taskId: pair.id,
+            your: yourLabel,
+            correct: pair.russian,
+          });
       }
       break;
     }
-    case 'sorting': {
+    case "sorting": {
       const c = exercise.content as SortingContent;
-      const catName = (id?: string) => c.categories.find((k) => k.id === id)?.name ?? '—';
+      const catName = (id?: string) =>
+        c.categories.find((k) => k.id === id)?.name ?? "—";
       for (const word of c.words) {
         total++;
         const chosen = answers[`word-${word.id}`];
@@ -69,11 +84,17 @@ export function scoreExercise(exercise: Exercise, answers: Answers): SubmissionR
 /** True once the student answered every scorable item (enables the button). */
 export function isComplete(exercise: Exercise, answers: Answers): boolean {
   const ids: string[] = [];
-  if (exercise.task_type === 'gap-fill')
-    (exercise.content as GapFillContent).gaps.forEach((g) => ids.push(`gap-${g.id}`));
-  if (exercise.task_type === 'matching')
-    (exercise.content as MatchingContent).pairs.forEach((p) => ids.push(`en-${p.id}`));
-  if (exercise.task_type === 'sorting')
-    (exercise.content as SortingContent).words.forEach((w) => ids.push(`word-${w.id}`));
-  return ids.every((id) => (answers[id] ?? '').length > 0);
+  if (exercise.task_type === "gap-fill")
+    (exercise.content as GapFillContent).gaps.forEach((g) =>
+      ids.push(`gap-${g.id}`),
+    );
+  if (exercise.task_type === "matching")
+    (exercise.content as MatchingContent).pairs.forEach((p) =>
+      ids.push(`en-${p.id}`),
+    );
+  if (exercise.task_type === "sorting")
+    (exercise.content as SortingContent).words.forEach((w) =>
+      ids.push(`word-${w.id}`),
+    );
+  return ids.every((id) => (answers[id] ?? "").length > 0);
 }

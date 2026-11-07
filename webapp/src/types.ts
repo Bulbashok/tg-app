@@ -1,5 +1,5 @@
 // Mirror of the backend content schemas (exercises.content jsonb).
-export type TaskType = 'gap-fill' | 'matching' | 'sorting';
+export type TaskType = "gap-fill" | "matching" | "sorting";
 
 export interface GapFillContent {
   passage: string;

@@ -1,15 +1,15 @@
 // Mini App root: Telegram init -> resolve exercise id -> fetch from Supabase
 // -> render the dynamic task view -> "Проверить" -> score, save, notify, feedback.
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useExerciseId, useTelegramInit } from './hooks/useTelegram';
-import { fetchExercise, submitResult } from './lib/api';
-import { tg, haptic } from './lib/telegram';
-import { scoreExercise, isComplete, type Answers } from './lib/scoring';
-import type { Exercise, SubmissionResult } from './types';
-import GapFill from './components/GapFill';
-import Matching from './components/Matching';
-import Sorting from './components/Sorting';
-import ResultBanner from './components/ResultBanner';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useExerciseId, useTelegramInit } from "./hooks/useTelegram";
+import { fetchExercise, submitResult } from "./lib/api";
+import { tg, haptic } from "./lib/telegram";
+import { scoreExercise, isComplete, type Answers } from "./lib/scoring";
+import type { Exercise, SubmissionResult } from "./types";
+import GapFill from "./components/GapFill";
+import Matching from "./components/Matching";
+import Sorting from "./components/Sorting";
+import ResultBanner from "./components/ResultBanner";
 
 export default function App() {
   useTelegramInit();
@@ -26,7 +26,7 @@ export default function App() {
   // Load exercise JSON from Supabase (anon read of the exercises table).
   useEffect(() => {
     if (!exerciseId) {
-      setLoadError('Нет ссылки на упражнение (parameter ?exercise=<id>).');
+      setLoadError("Нет ссылки на упражнение (parameter ?exercise=<id>).");
       return;
     }
     fetchExercise(exerciseId)
@@ -36,7 +36,8 @@ export default function App() {
 
   // Stable identity for answer updates passed into task components.
   const setAnswer = useCallback(
-    (key: string, value: string) => setAnswers((prev) => ({ ...prev, [key]: value })),
+    (key: string, value: string) =>
+      setAnswers((prev) => ({ ...prev, [key]: value })),
     [],
   );
 
@@ -46,14 +47,14 @@ export default function App() {
     if (!exercise) return;
     const scored = scoreExercise(exercise, answers);
     setResult(scored);
-    haptic(scored.correct === scored.total ? 'success' : 'error');
+    haptic(scored.correct === scored.total ? "success" : "error");
 
     // One backend call: verify initData -> save submission -> alert teacher.
     setSubmitting(true);
     try {
       await submitResult({
         exerciseId: exercise.id,
-        initData: tg?.initData ?? '',
+        initData: tg?.initData ?? "",
         score: scored.score,
         errors: scored.errors,
       });
@@ -69,17 +70,27 @@ export default function App() {
     if (!exercise) return null;
     const props = { answers, revealed, onChange: setAnswer };
     switch (exercise.task_type) {
-      case 'gap-fill':
+      case "gap-fill":
         return <GapFill content={exercise.content as never} {...props} />;
-      case 'matching':
+      case "matching":
         return <Matching content={exercise.content as never} {...props} />;
-      case 'sorting':
+      case "sorting":
         return <Sorting content={exercise.content as never} {...props} />;
     }
   }, [exercise, answers, revealed, setAnswer]);
 
-  if (loadError) return <div className="app"><p className="state state--error">{loadError}</p></div>;
-  if (!exercise) return <div className="app"><p className="state">Загрузка упражнения…</p></div>;
+  if (loadError)
+    return (
+      <div className="app">
+        <p className="state state--error">{loadError}</p>
+      </div>
+    );
+  if (!exercise)
+    return (
+      <div className="app">
+        <p className="state">Загрузка упражнения…</p>
+      </div>
+    );
 
   return (
     <div className="app">
@@ -91,7 +102,11 @@ export default function App() {
       <main className="app__body">{view}</main>
 
       {result && (
-        <ResultBanner result={result} notified={notified} notifyError={notifyError} />
+        <ResultBanner
+          result={result}
+          notified={notified}
+          notifyError={notifyError}
+        />
       )}
 
       {!revealed && (
@@ -101,7 +116,7 @@ export default function App() {
           onClick={onCheck}
           disabled={!isComplete(exercise, answers) || submitting}
         >
-          {submitting ? 'Отправка…' : 'Проверить'}
+          {submitting ? "Отправка…" : "Проверить"}
         </button>
       )}
     </div>

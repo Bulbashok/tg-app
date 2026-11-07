@@ -1,14 +1,17 @@
 // Downloads the Telegram photo and uploads it to Supabase Storage,
 // returning a public URL that Groq Vision can fetch.
-import { supabase } from './supabase.js';
-import { env } from './env.js';
-import type { Bot } from 'grammy';
+import { supabase } from "./supabase.js";
+import { env } from "./env.js";
+import type { Bot } from "grammy";
 
 /**
  * @param fileId Telegram file_id of the largest photo size.
  * @returns Publicly accessible URL of the stored image.
  */
-export async function storeTelegramPhoto(bot: Bot, fileId: string): Promise<string> {
+export async function storeTelegramPhoto(
+  bot: Bot,
+  fileId: string,
+): Promise<string> {
   // 1. Resolve the Telegram file download URL (token stays server-side).
   const file = await bot.api.getFile(fileId);
   const tgUrl = `https://api.telegram.org/file/bot${env.telegramBotToken}/${file.file_path}`;
@@ -17,7 +20,7 @@ export async function storeTelegramPhoto(bot: Bot, fileId: string): Promise<stri
   const buffer = Buffer.from(await res.arrayBuffer());
 
   // 2. Upload to Supabase Storage (unique, non-guessable key).
-  const ext = (file.file_path?.split('.').pop() ?? 'jpg').toLowerCase();
+  const ext = (file.file_path?.split(".").pop() ?? "jpg").toLowerCase();
   const path = `${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from(env.imageBucket)

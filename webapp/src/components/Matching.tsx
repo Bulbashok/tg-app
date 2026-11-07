@@ -2,11 +2,11 @@
 // Tap an English item, then a Russian item to connect them — both columns
 // highlight with the same accent color per pair. Re-tap to unpair.
 // After submit, pairs are colored green (correct) / red (wrong).
-import { useMemo, useState } from 'react';
-import type { MatchingContent } from '../types';
-import type { Answers } from '../lib/scoring';
-import { shuffle } from '../lib/utils';
-import { haptic } from '../lib/telegram';
+import { useMemo, useState } from "react";
+import type { MatchingContent } from "../types";
+import type { Answers } from "../lib/scoring";
+import { shuffle } from "../lib/utils";
+import { haptic } from "../lib/telegram";
 
 interface Props {
   content: MatchingContent;
@@ -16,9 +16,14 @@ interface Props {
 }
 
 /** 5 rotating accent colors for formed pairs. */
-const PALETTE = ['a', 'b', 'c', 'd', 'e'];
+const PALETTE = ["a", "b", "c", "d", "e"];
 
-export default function Matching({ content, answers, revealed, onChange }: Props) {
+export default function Matching({
+  content,
+  answers,
+  revealed,
+  onChange,
+}: Props) {
   const [selectedEn, setSelectedEn] = useState<number | null>(null);
 
   // Russian column order is shuffled once per mount.
@@ -31,13 +36,13 @@ export default function Matching({ content, answers, revealed, onChange }: Props
     if (revealed) return;
     // Re-tapping a paired item clears its pair.
     if (answers[`en-${id}`]) {
-      onChange(`en-${id}`, '');
+      onChange(`en-${id}`, "");
       setSelectedEn(null);
-      haptic('selection');
+      haptic("selection");
       return;
     }
     setSelectedEn((cur) => (cur === id ? null : id));
-    haptic('selection');
+    haptic("selection");
   };
 
   const tapRussian = (ruId: number) => {
@@ -45,10 +50,11 @@ export default function Matching({ content, answers, revealed, onChange }: Props
     if (selectedEn == null) return; // must start from the English column
     onChange(`en-${selectedEn}`, String(ruId));
     setSelectedEn(null);
-    haptic('medium');
+    haptic("medium");
   };
 
-  const isPairCorrect = (pairId: number) => answers[`en-${pairId}`] === String(pairId);
+  const isPairCorrect = (pairId: number) =>
+    answers[`en-${pairId}`] === String(pairId);
 
   return (
     <div className="matching">
@@ -61,16 +67,22 @@ export default function Matching({ content, answers, revealed, onChange }: Props
               type="button"
               key={p.id}
               className={[
-                'matching__item',
-                selectedEn === p.id ? 'is-selected' : '',
-                paired ? `is-paired pair-${colorFor(p.id)}` : '',
-                revealed ? (isPairCorrect(p.id) ? 'is-correct' : 'is-wrong') : '',
-              ].join(' ')}
+                "matching__item",
+                selectedEn === p.id ? "is-selected" : "",
+                paired ? `is-paired pair-${colorFor(p.id)}` : "",
+                revealed
+                  ? isPairCorrect(p.id)
+                    ? "is-correct"
+                    : "is-wrong"
+                  : "",
+              ].join(" ")}
               onClick={() => tapEnglish(p.id)}
             >
               <span className="matching__num">{p.id}</span>
               {p.english}
-              {paired && <span className={`matching__dot pair-${colorFor(p.id)}`} />}
+              {paired && (
+                <span className={`matching__dot pair-${colorFor(p.id)}`} />
+              )}
             </button>
           );
         })}
@@ -80,24 +92,28 @@ export default function Matching({ content, answers, revealed, onChange }: Props
         <h3 className="matching__head">Russian</h3>
         {russianItems.map((p) => {
           // Is this russian item claimed by some english row?
-          const ownerId = content.pairs.find((q) => answers[`en-${q.id}`] === String(p.id))?.id;
+          const ownerId = content.pairs.find(
+            (q) => answers[`en-${q.id}`] === String(p.id),
+          )?.id;
           return (
             <button
               type="button"
               key={`ru-${p.id}`}
               className={[
-                'matching__item',
-                ownerId != null ? `is-paired pair-${colorFor(ownerId)}` : '',
+                "matching__item",
+                ownerId != null ? `is-paired pair-${colorFor(ownerId)}` : "",
                 revealed && ownerId != null
                   ? ownerId === p.id
-                    ? 'is-correct'
-                    : 'is-wrong'
-                  : '',
-              ].join(' ')}
+                    ? "is-correct"
+                    : "is-wrong"
+                  : "",
+              ].join(" ")}
               onClick={() => tapRussian(p.id)}
             >
               {p.russian}
-              {ownerId != null && <span className={`matching__dot pair-${colorFor(ownerId)}`} />}
+              {ownerId != null && (
+                <span className={`matching__dot pair-${colorFor(ownerId)}`} />
+              )}
             </button>
           );
         })}

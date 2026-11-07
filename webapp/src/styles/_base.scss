@@ -1,4 +1,4 @@
-@use 'variables' as *;
+@use "variables" as *;
 
 // App shell / layout ----------------------------------------------------------
 * {
@@ -66,7 +66,9 @@ body {
     border-radius: $radius-md;
     box-shadow: $shadow;
     cursor: pointer;
-    transition: transform 0.08s ease, opacity 0.2s ease;
+    transition:
+      transform 0.08s ease,
+      opacity 0.2s ease;
 
     &:active:not(:disabled) {
       transform: scale(0.99);

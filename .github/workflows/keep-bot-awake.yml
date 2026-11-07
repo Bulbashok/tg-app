@@ -1,0 +1,25 @@
+# Keeps the free Render instance warm — free web services sleep after ~15
+# minutes without INCOMING HTTP requests, and a sleeping instance = offline bot.
+# GitHub runs this every 5 minutes (free for public repos; schedules can drift
+# a few minutes under high load, which is acceptable here).
+name: keep-bot-awake
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Hit Render health endpoint
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -m 25 -w "%{http_code}" "${{ vars.BACKEND_URL }}/health" || true)
+            echo "attempt $i -> HTTP $code"
+            [ "$code" = "200" ] && break
+            sleep 20
+          done
+        shell: bash

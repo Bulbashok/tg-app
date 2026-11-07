@@ -1,4 +1,4 @@
-@use 'variables' as *;
+@use "variables" as *;
 
 // matching: two parallel columns, tap-to-pair -------------------------------
 .matching {
@@ -38,7 +38,9 @@
     border-radius: $radius-md;
     box-shadow: $shadow;
     cursor: pointer;
-    transition: transform 0.08s ease, border-color 0.12s ease;
+    transition:
+      transform 0.08s ease,
+      border-color 0.12s ease;
 
     &:active {
       transform: scale(0.98);

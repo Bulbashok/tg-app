@@ -17,10 +17,12 @@ services:
         sync: false
       - key: BOT_USERNAME
         sync: false
-      - key: GROQ_API_KEY
+      - key: AI_API_KEY
         sync: false
-      - key: GROQ_MODEL
-        value: meta-llama/llama-4-scout-17b-16e-instruct
+      - key: AI_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: AI_MODEL
+        value: qwen/qwen3.8-27b
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY

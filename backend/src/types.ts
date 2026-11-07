@@ -1,8 +1,8 @@
 // Zod schemas enforce the strict JSON contract we expect from Groq
 // and mirror the TypeScript types used by the React Mini App.
-import { z } from 'zod';
+import { z } from "zod";
 
-export const taskTypeEnum = z.enum(['gap-fill', 'matching', 'sorting']);
+export const taskTypeEnum = z.enum(["gap-fill", "matching", "sorting"]);
 export type TaskType = z.infer<typeof taskTypeEnum>;
 
 // ---------------------------------------------------------------------------
@@ -73,10 +73,10 @@ export function parseExerciseDraft(raw: unknown): ExerciseRow {
     content: unknown;
   };
   const contentSchema = {
-    'gap-fill': gapFillSchema,
+    "gap-fill": gapFillSchema,
     matching: matchingSchema,
     sorting: sortingSchema,
   }[base.task_type];
-  const content = contentSchema.parse(base.content) as ExerciseRow['content'];
-  return { ...base, content, id: '', created_at: '' }; // id assigned by Postgres on insert
+  const content = contentSchema.parse(base.content) as ExerciseRow["content"];
+  return { ...base, content, id: "", created_at: "" }; // id assigned by Postgres on insert
 }
