@@ -44,15 +44,18 @@ content schemas:
     "gaps":    [{"id": 1, "answer": "goes"}, ...]  (exact key for each marker),
     "wordBank":[{"id": 1, "word": "goes"}, ...]    (one word per gap; ids may repeat only if the same word is reused)
   }
-- matching: { "pairs": [{"id": 1, "english": "to give up", "russian": "сдаваться"}, ...] } (4-10 pairs)
+- matching: { "pairs": [{"id": 1, "english": "to give up", "russian": "сдаваться"}, ...] } (4-8 pairs)
 - sorting:  {
     "categories": [{"id": "cat1", "name": "Food"}, ...] (2-4 groups visible on the page),
-    "words":      [{"id": "w1", "text": "apple", "categoryId": "cat1"}, ...] (6-12 words)
+    "words":      [{"id": "w1", "text": "apple", "categoryId": "cat1"}, ...] (6-10 words)
   }
 
 Rules:
 - Use ONLY material present in the screenshot; never invent extra vocabulary.
 - Answers must be unambiguous single strings (case-insensitive comparison later).
+- Keep the output COMPACT (hard token budget): max 8 gaps, 8 pairs or 10 words —
+  if the page has more items, take the first ones only.
+- No comments, no explanations, no trailing text. Short strings only.
 - Output must be valid JSON parseable by JSON.parse.`;
 
 /** Tolerant JSON extraction: models sometimes wrap output in fences/prose. */
@@ -74,9 +77,9 @@ export async function parseImageToExercise(imageUrl: string): Promise<ExerciseRo
   const completion = await ai.chat.completions.create({
     model: env.aiModel,
     temperature: 0.2, // deterministic structure > creativity here
-    // max_completion_tokens is the current field (max_tokens is deprecated
-    // on Groq, and required-style variants apply to reasoning models).
-    max_completion_tokens: 4096,
+    // Capped below Groq's free-tier 1000 OTPM gate; override via
+    // AI_MAX_OUTPUT_TOKENS once billing is upgraded.
+    max_completion_tokens: env.aiMaxOutputTokens,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {

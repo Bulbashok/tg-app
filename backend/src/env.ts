@@ -21,6 +21,9 @@ export const env = {
   aiBaseUrl: process.env.AI_BASE_URL ?? 'https://api.groq.com/openai/v1',
   aiApiKey: required('AI_API_KEY'),
   aiModel: process.env.AI_MODEL ?? 'qwen/qwen3.8-27b',
+  // Groq free tier allows only 1000 output tokens/min for qwen3.8-27b, and
+  // rejects requests whose EXPECTED output exceeds it -> keep the cap under.
+  aiMaxOutputTokens: Number(process.env.AI_MAX_OUTPUT_TOKENS ?? 900),
   supabaseUrl: required("SUPABASE_URL"),
   // Service-role key: bypasses RLS. Backend-only, never sent to the client.
   supabaseServiceKey: required("SUPABASE_SERVICE_ROLE_KEY"),
