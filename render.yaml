@@ -1,0 +1,29 @@
+# Render blueprint — deploy the bot/webhook server.
+# Mini App domain (Vercel) must be registered with the bot via
+# BotFather -> /newapp or "Set Menu Button URL".
+services:
+  - type: web
+    name: english-exercises-bot
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_TEACHER_ID
+        sync: false
+      - key: BOT_USERNAME
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: meta-llama/llama-4-scout-17b-16e-instruct
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: WEB_APP_URL
+        sync: false

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    // Keep tsc -b artifacts out of the source tree (emitted into node_modules).
+    "outDir": "node_modules/.tmp/tsconfig.node",
+    "strict": true
+  },
+  "include": ["vite.config.ts"]
+}

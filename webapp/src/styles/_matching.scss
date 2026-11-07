@@ -1,0 +1,91 @@
+@use 'variables' as *;
+
+// matching: two parallel columns, tap-to-pair -------------------------------
+.matching {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  &__column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__head {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    color: $muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 52px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: left;
+    color: $text;
+    background: $card;
+    border: 2px solid transparent;
+    border-radius: $radius-md;
+    box-shadow: $shadow;
+    cursor: pointer;
+    transition: transform 0.08s ease, border-color 0.12s ease;
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &.is-selected {
+      border-color: $accent;
+    }
+
+    &.is-correct {
+      border-color: $green;
+      background: $green-bg;
+    }
+
+    &.is-wrong {
+      border-color: $red;
+      background: $red-bg;
+    }
+  }
+
+  &__num {
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  &__dot {
+    margin-left: auto;
+    width: 12px;
+    height: 12px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+  }
+}
+
+// Colored pairing accents (border + dot share the pair color).
+@each $key, $color in $pair-colors {
+  .pair-#{$key} {
+    border-color: $color !important;
+  }
+  .matching__dot.pair-#{$key} {
+    background: $color;
+  }
+}

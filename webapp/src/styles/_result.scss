@@ -1,0 +1,58 @@
+@use 'variables' as *;
+
+// Result banner shown after submit ------------------------------------------
+.result {
+  padding: 16px;
+  border-radius: $radius-lg;
+  box-shadow: $shadow;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  &--perfect {
+    background: $green-bg;
+    color: $green;
+  }
+
+  &--good {
+    background: rgba(51, 144, 236, 0.1);
+    color: $accent;
+  }
+
+  &--bad {
+    background: $red-bg;
+    color: $red;
+  }
+
+  &__score {
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  &__pct {
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+
+  &__errors {
+    margin: 0;
+    padding-left: 4px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: $text;
+
+    li {
+      line-height: 1.4;
+    }
+  }
+
+  &__status {
+    margin: 0;
+    font-size: 13px;
+    opacity: 0.85;
+  }
+}

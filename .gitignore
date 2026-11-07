@@ -1,0 +1,14 @@
+# Secrets — never commit real keys
+.env
+.env.local
+**/.env
+!**/.env.example
+
+# Dependencies & build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Misc
+.DS_Store
+npm-debug.log*

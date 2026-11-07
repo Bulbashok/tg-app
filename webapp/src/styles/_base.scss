@@ -1,0 +1,90 @@
+@use 'variables' as *;
+
+// App shell / layout ----------------------------------------------------------
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: $font-stack;
+  background: $bg;
+  color: $text;
+}
+
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 14px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  &__instruction {
+    margin: 0;
+    color: $muted;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  // Big primary submit button pinned at the bottom of the flow.
+  &__submit {
+    position: sticky;
+    bottom: 12px;
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: $accent-text;
+    background: $accent;
+    border: none;
+    border-radius: $radius-md;
+    box-shadow: $shadow;
+    cursor: pointer;
+    transition: transform 0.08s ease, opacity 0.2s ease;
+
+    &:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.state {
+  text-align: center;
+  color: $muted;
+  padding: 40px 16px;
+
+  &--error {
+    color: $red;
+  }
+}
