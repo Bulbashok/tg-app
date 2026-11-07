@@ -58,7 +58,7 @@ bot.on("message", async (ctx, next) => {
     return ctx.reply("⛔ Only the teacher can upload exercises.");
   }
 
-  await ctx.reply('🤖 Parsing with Llama 4 Vision, one moment…');
+  await ctx.reply("🤖 Parsing with AI vision (Qwen3.8), one moment…");
 
   try {
     const imageUrl = await storeTelegramPhoto(bot, fileId);
@@ -83,7 +83,9 @@ bot.on("message", async (ctx, next) => {
 bot.callbackQuery(/^(confirm|cancel):([0-9a-f-]{8})$/, async (ctx: Context) => {
   if (!isTeacher(ctx.from?.id ?? 0)) return ctx.answerCallbackQuery();
 
-  const [action, draftId] = ctx.match as string[];
+  // NOTE: grammY's ctx.match is a full RegExpMatchArray ([0] = whole string),
+  // so parse the raw callback data directly instead.
+  const [action, draftId] = (ctx.callbackQuery?.data ?? '').split(':');
   await ctx.answerCallbackQuery();
 
   if (action === "cancel") {
