@@ -29,10 +29,11 @@ export function verifyInitData(initData: string): VerifiedUser | null {
     const hash = params.get("hash");
     if (!hash) return null;
 
-    // data-check-string = all key/value pairs except "hash", sorted, newline-joined.
+    // data-check-string = all key/value pairs except "hash", sorted by byte
+    // order (per Telegram spec), newline-joined.
     params.delete("hash");
     const entries = [...params.entries()].sort(([a], [b]) =>
-      a.localeCompare(b),
+      a < b ? -1 : a > b ? 1 : 0,
     );
     const dataCheckString = entries.map(([k, v]) => `${k}=${v}`).join("\n");
 

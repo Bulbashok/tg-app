@@ -1,5 +1,6 @@
 // Score banner shown after "Проверить": score, per-error recap, teacher alert status.
 import type { SubmissionResult } from "../types";
+import { tg } from "../lib/telegram";
 
 interface Props {
   result: SubmissionResult;
@@ -30,7 +31,9 @@ export default function ResultBanner({ result, notified, notifyError }: Props) {
         {notified
           ? "✅ Результат сохранён и отправлен преподавателю"
           : notifyError
-            ? "⚠️ Не удалось отправить. Проверьте соединение и попробуйте снова."
+            ? tg?.initData
+              ? "⚠️ Не удалось отправить. Проверьте соединение и попробуйте снова."
+              : "⚠️ Откройте упражнение по кнопке из сообщения бота — иначе результат не сохранить."
             : "⏳ Отправка результата…"}
       </p>
     </div>
