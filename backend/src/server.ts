@@ -135,6 +135,16 @@ bot.catch((err) =>
   console.error("bot error:", describeTelegramError(err.error)),
 );
 
+// Make the command menu (the "/" list in Telegram) visible to everyone.
+void bot.api
+  .setMyCommands([
+    { command: "start", description: "Open dashboard" },
+    { command: "library", description: "Browse exercises (teacher)" },
+    { command: "list", description: "Latest exercises (teacher)" },
+    { command: "help", description: "How to use this bot" },
+  ])
+  .catch((err) => console.error("setMyCommands failed:", err.message));
+
 // Long polling (no public webhook/TLS needed on Render). Stop cleanly on
 // SIGTERM/SIGINT so Render restarts don't leave a dangling getUpdates lock.
 void bot.start();

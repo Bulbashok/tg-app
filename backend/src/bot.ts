@@ -187,12 +187,12 @@ const LIB_TYPES = [
 
 const PAGE_SIZE = 8;
 
-bot.callbackQuery(/^lib:/, async (ctx) => {
-  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.answerCallbackQuery();
-  const [, type, pageStr] = (ctx.callbackQuery?.data ?? "").split(":");
-  const page = Number(pageStr) || 0;
-  await ctx.answerCallbackQuery();
-
+/** Build one library page: tab row + up to PAGE_SIZE items + nav. Shared by
+ * the /library command (reply) and the lib: callbacks (edit in place). */
+async function libraryView(
+  type: string,
+  page: number,
+): Promise<{ text: string; kb: InlineKeyboard }> {
   const offset = page * PAGE_SIZE;
   const { data, count } = await supabase
     .from("exercises")
@@ -213,12 +213,26 @@ bot.callbackQuery(/^lib:/, async (ctx) => {
   if (offset > 0) kb.text("◀ Prev", `lib:${type}:${page - 1}`);
   if (offset + rows.length < total) kb.text("Next ▶", `lib:${type}:${page + 1}`);
 
-  await ctx.editMessageText(
-    rows.length
+  return {
+    text: rows.length
       ? `📚 ${full} — ${total} exercises · page ${page + 1}/${Math.max(1, Math.ceil(total / PAGE_SIZE))}`
       : `📚 ${full}\n\nNothing here yet.`,
-    { reply_markup: kb },
-  );
+    kb,
+  };
+}
+
+bot.command("library", async (ctx) => {
+  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.reply("Teacher only.");
+  const { text, kb } = await libraryView("gap-fill", 0);
+  await ctx.reply(text, { reply_markup: kb });
+});
+
+bot.callbackQuery(/^lib:/, async (ctx) => {
+  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.answerCallbackQuery();
+  const [, type, pageStr] = (ctx.callbackQuery?.data ?? "").split(":");
+  await ctx.answerCallbackQuery();
+  const { text, kb } = await libraryView(type, Number(pageStr) || 0);
+  await ctx.editMessageText(text, { reply_markup: kb });
 });
 
 // One exercise: open / share / get back to the tab.
@@ -268,6 +282,21 @@ function publishFinal(ex: { id: string; title: string }): {
   return { text, kb };
 }
 
+/** Extract telegram ids from `assignments.select("students(telegram_id)")`
+ * rows. Embedded many-to-one arrives as an object; supabase-js types it as
+ * an array without generated DB types — accept both shapes. */
+function embeddedTelegramIds(rows: unknown[] | null): number[] {
+  return (rows ?? [])
+    .map((r: unknown) => {
+      const s = (r as { students?: unknown }).students;
+      const row = (Array.isArray(s) ? s[0] : s) as
+        | { telegram_id?: number }
+        | undefined;
+      return row?.telegram_id;
+    })
+    .filter((v): v is number => typeof v === "number");
+}
+
 /** The step right after publishing: tap student names to assign (any number,
  * re-tap toggles nothing — assignments are idempotent), then Done. */
 async function renderAssignStep(
@@ -293,17 +322,7 @@ async function renderAssignStep(
     .select("students(telegram_id)")
     .eq("exercise_id", ex.id);
   const assigned = new Set(
-    (asg ?? [])
-      .map((r: unknown) => {
-        // Embedded many-to-one: object at runtime, array per supabase-js
-        // type inference without generated DB types — accept both.
-        const s = (r as { students?: unknown }).students;
-        const row = (Array.isArray(s) ? s[0] : s) as
-          | { telegram_id?: number }
-          | undefined;
-        return String(row?.telegram_id ?? "");
-      })
-      .filter(Boolean),
+    embeddedTelegramIds(asg as unknown[] | null).map(String),
   );
 
   const kb = new InlineKeyboard();
@@ -363,12 +382,48 @@ bot.callbackQuery(/^done:/, async (ctx) => {
   await ctx.answerCallbackQuery();
   const { data: ex } = await supabase
     .from("exercises")
-    .select("id,title")
+    .select("id,title,instruction")
     .eq("id", exId)
     .single();
   if (!ex) return;
+
+  // Push step: DM every assigned student their new exercise. Bots can only
+  // DM users who have pressed /start once — those are exactly the students
+  // that can appear in the assign list, but a failed leg must not stop the
+  // others, so allSettled + a sent/total note in the final message.
+  const { data: asg } = await supabase
+    .from("assignments")
+    .select("students(telegram_id)")
+    .eq("exercise_id", ex.id);
+  const tgIds = [...new Set(embeddedTelegramIds(asg as unknown[] | null))];
+
+  let sentNote = "";
+  if (tgIds.length) {
+    const results = await Promise.allSettled(
+      tgIds.map((id) =>
+        bot.api.sendMessage(
+          id,
+          `📚 New exercise: ${ex.title}\n\n${ex.instruction}`,
+          {
+            reply_markup: new InlineKeyboard().webApp(
+              "🎓 Open",
+              webAppLink(ex.id),
+            ),
+          },
+        ),
+      ),
+    );
+    const sent = results.filter((r) => r.status === "fulfilled").length;
+    sentNote =
+      sent === tgIds.length
+        ? `\n\n📤 Sent to ${sent} student${sent === 1 ? "" : "s"}.`
+        : `\n\n📤 Sent to ${sent}/${tgIds.length} — the rest must press /start in this bot once.`;
+  } else {
+    sentNote = "\n\nℹ️ Nobody assigned — the link above still works manually.";
+  }
+
   const { text, kb } = publishFinal(ex);
-  await ctx.editMessageText(text, { reply_markup: kb });
+  await ctx.editMessageText(text + sentNote, { reply_markup: kb });
 });
 
 // --- Student dashboard: "My exercises" ---------------------------------------

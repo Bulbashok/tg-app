@@ -150,11 +150,10 @@ body {
     gap: 16px;
   }
 
-  // Big primary submit button pinned at the bottom of the flow. Flat forest
-  // green with a hard keycap edge — pressable, not glowing.
+  // Big primary submit button at the end of the flow (not sticky: it is
+  // disabled until every item is answered, so pinning it only wastes space).
+  // Flat forest green with a hard keycap edge — pressable, not glowing.
   &__submit {
-    position: sticky;
-    bottom: 12px;
     width: 100%;
     padding: 15px 16px;
     font-size: 17px;
