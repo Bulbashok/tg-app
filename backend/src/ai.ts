@@ -57,10 +57,10 @@ content schemas:
     "gaps":    [{"id": 1, "answer": "goes"}, ...]  (exact key for each marker),
     "wordBank":[{"id": 1, "word": "goes"}, ...]    (one word per gap; ids may repeat only if the same word is reused)
   }
-- matching: { "pairs": [{"id": 1, "english": "to give up", "russian": "сдаваться"}, ...] } (4-8 pairs)
+- matching: { "pairs": [{"id": 1, "english": "to give up", "russian": "сдаваться"}, ...] } (4-14 pairs)
 - sorting:  {
     "categories": [{"id": "cat1", "name": "Food"}, ...] (2-4 groups visible on the page),
-    "words":      [{"id": "w1", "text": "apple", "categoryId": "cat1"}, ...] (6-10 words)
+    "words":      [{"id": "w1", "text": "apple", "categoryId": "cat1"}, ...] (6-16 words)
   }
 - word-form: {
     "items": [{
@@ -79,8 +79,9 @@ Rules:
 - Use ONLY material present in the screenshot; never invent extra vocabulary.
 - Answers must be unambiguous strings, compared case-insensitively
   (word-form answers may consist of several words).
-- Keep the output COMPACT (hard token budget ~900 tokens): max 10 gaps, 8 pairs,
-  10 words or 13 word-form items — if the page has more, take the first ones only.
+- Keep the output COMPACT (hard token budget ~900 tokens): max 10 gaps, 14 pairs,
+  16 words or 13 word-form items — short strings fit easily; only trim if the
+  page genuinely has more items than the limit (take the first ones then).
 - If an exercise has more than 10 items, OMIT every "alt" array to save tokens.
 - No comments, no explanations, no trailing text. Short strings only.
 - Output must be valid JSON parseable by JSON.parse.`;
