@@ -73,11 +73,11 @@ content schemas:
       "alt":    ["to get published"]                    // optional accepted alternatives
     }, ...] (4-13 items)
   }
-  For word-form, "id" is a running gap counter (1,2,3...) but "sentence" is the
-  number printed in the book: a sentence with TWO blanks (e.g. a question plus
-  its short answer on one numbered line) becomes two items sharing ONE sentence
-  number — NEVER renumber the following sentences. Omit "sentence" only when
-  the book numbers nothing.
+  For word-form, gaps are numbered 1..n in the app itself; "sentence" only
+  groups them: a sentence with TWO blanks (e.g. a question plus its short
+  answer on one numbered line) becomes two items sharing ONE sentence number,
+  so the app can keep them together under one entry. NEVER split one
+  numbered textbook sentence into separately numbered exercises.
   For key word transformation ("Do not change the word given"): the "answer"
   must contain the hint word unchanged, plus the other words needed.
 

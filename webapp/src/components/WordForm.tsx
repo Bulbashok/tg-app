@@ -27,11 +27,11 @@ export default function WordForm({
     return [item.answer, ...(item.alt ?? [])].map(normText).includes(your);
   };
 
-  // Number label per gap: textbook sentence number when the parser gave
-  // one (or for old exercises without `sentence`, plain 1..n positions).
+  // Number label per gap: running 1..n position. `sentence` only groups
+  // gaps of one textbook sentence (continuation lines) — it never renumbers.
   const numbered = content.items.map((item, i) => ({
     item,
-    num: item.sentence ?? i + 1,
+    num: i + 1,
     // Continuation gap of the same sentence: no repeated number.
     cont: i > 0 && item.sentence !== undefined &&
       item.sentence === content.items[i - 1].sentence,
