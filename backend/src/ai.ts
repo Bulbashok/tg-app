@@ -86,10 +86,13 @@ Rules:
 - Use ONLY material present in the screenshot; never invent extra vocabulary.
 - Answers must be unambiguous strings, compared case-insensitively
   (word-form answers may consist of several words).
-- Keep the output COMPACT (hard token budget ~900 tokens): max 10 gaps, 14 pairs,
-  16 words or 13 word-form items — short strings fit easily; only trim if the
-  page genuinely has more items than the limit (take the first ones then).
-- If an exercise has more than 10 items, OMIT every "alt" array to save tokens.
+- Output COMPACT MINIFIED JSON: no newlines, no indentation, no spaces
+  between tokens (hard token budget ~1000 output tokens). Omit "alt" when
+  there are no alternatives; keep "before"/"after" as short fragments.
+- Caps: max 10 gaps, 14 pairs, 16 words or 13 word-form items — short
+  strings fit easily; only trim if the page genuinely has more items than
+  the limit (take the first ones then).
+- If an exercise has more than 8 items, OMIT every "alt" array to save tokens.
 - No comments, no explanations, no trailing text. Short strings only.
 - Output must be valid JSON parseable by JSON.parse.`;
 

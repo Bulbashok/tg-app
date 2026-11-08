@@ -24,7 +24,7 @@ services:
       - key: AI_MODEL
         value: qwen/qwen3.8-27b
       - key: AI_MAX_OUTPUT_TOKENS
-        value: "900"
+        value: "1000"
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
