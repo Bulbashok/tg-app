@@ -57,6 +57,7 @@ export function scoreExercise(
         else
           errors.push({
             taskId: pair.id,
+            label: pair.english,
             your: yourLabel,
             correct: pair.russian,
           });
@@ -74,6 +75,7 @@ export function scoreExercise(
         else
           errors.push({
             taskId: word.id,
+            label: word.text,
             your: catName(chosen),
             correct: catName(word.categoryId),
           });
@@ -90,6 +92,7 @@ export function scoreExercise(
         else
           errors.push({
             taskId: item.id,
+            label: item.hint,
             your: your || "—",
             correct: item.answer,
           });

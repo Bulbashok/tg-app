@@ -37,6 +37,9 @@ export interface Exercise {
 /** One wrong answer, stored in submissions.errors jsonb. */
 export interface ErrorDetail {
   taskId: string | number;
+  /** What was asked, as a word: English term (matching), base word
+   * (word-form), card text (sorting). Gap-fill has none -> № fallback. */
+  label?: string;
   your: string;
   correct: string;
 }

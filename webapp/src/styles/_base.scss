@@ -24,13 +24,14 @@
   --err-bg: #fceceb;
   --err-border: #f0b5b1;
 
-  // Pair accents: Okabe–Ito colorblind-safe palette (clearly distinct
-  // under protanopia/deuteranopia, unlike the former earth tones).
-  --pair-a: #0072b2;
-  --pair-b: #d55e00;
-  --pair-c: #009e73;
-  --pair-d: #a9538a;
-  --pair-e: #b07800;
+  // Pair accents: five clearly separated hue families (blue, orange,
+  // green, pink, graphite) — chosen so no two look alike under
+  // protanopia/deuteranopia; graphite reads even without color vision.
+  --pair-a: #44413a;
+  --pair-b: #0072b2;
+  --pair-c: #e69f00;
+  --pair-d: #009e73;
+  --pair-e: #cc79a7;
 
   // Nudge native Telegram chrome (buttons it may render) to our palette.
   --tg-theme-button-color: #2d5a27;
@@ -57,11 +58,11 @@
   --err-bg: #33211f;
   --err-border: #a2665f;
 
-  --pair-a: #56b4e9;
-  --pair-b: #ef8a62;
-  --pair-c: #3cbfa0;
-  --pair-d: #dd9fc3;
-  --pair-e: #eec257;
+  --pair-a: #a39e93;
+  --pair-b: #56b4e9;
+  --pair-c: #f0b45a;
+  --pair-d: #3cbfa0;
+  --pair-e: #e5a9c6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -85,11 +86,11 @@
     --err-bg: #33211f;
     --err-border: #a2665f;
 
-    --pair-a: #56b4e9;
-    --pair-b: #ef8a62;
-    --pair-c: #3cbfa0;
-    --pair-d: #dd9fc3;
-    --pair-e: #eec257;
+    --pair-a: #a39e93;
+    --pair-b: #56b4e9;
+    --pair-c: #f0b45a;
+    --pair-d: #3cbfa0;
+    --pair-e: #e5a9c6;
   }
 }
 

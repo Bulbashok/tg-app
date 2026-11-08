@@ -40,7 +40,8 @@ export default function ResultBanner({
           <ul className="result__errors">
             {result.errors.map((e, i) => (
               <li key={i}>
-                №{e.taskId}: «{e.your}» → correct: «{e.correct}»
+                {e.label ? `«${e.label}»` : `№${e.taskId}`}: «{e.your}» →
+                correct: «{e.correct}»
                 {whyFor(e.taskId) && (
                   <p className="result__why">{whyFor(e.taskId)}</p>
                 )}

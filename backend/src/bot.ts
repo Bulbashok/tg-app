@@ -190,7 +190,13 @@ bot.command("list", async (ctx) => {
 });
 
 // --- Notify the teacher about a student submission (from the webhook) --------
-type StudentError = { taskId?: unknown; your?: unknown; correct?: unknown };
+type StudentError = {
+  taskId?: unknown;
+  /** Asked word (English term / base word / card text); absent for gap-fill. */
+  label?: unknown;
+  your?: unknown;
+  correct?: unknown;
+};
 
 export async function alertTeacher(payload: {
   exerciseTitle: string;
@@ -214,7 +220,10 @@ export async function alertTeacher(payload: {
   const lines = (payload.errors ?? [])
     .slice(0, 20) // Telegram limit guard; teacher sees the first 20
     .map((e, i) => {
-      const line = `${i + 1}) №${clip(e.taskId, 8)}: ${clip(e.your)} → ${clip(e.correct)}`;
+      const what = e.label
+        ? clip(e.label, 30)
+        : `№${clip(e.taskId, 8)}`; // gap-fill has no word label
+      const line = `${i + 1}) ${what}: ${clip(e.your)} → ${clip(e.correct)}`;
       const why = hintById.get(String(e.taskId ?? ""));
       return why ? `${line}\n   ↳ ${clip(why, 160)}` : line;
     });

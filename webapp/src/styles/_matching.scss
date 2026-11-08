@@ -29,7 +29,9 @@
     align-items: center;
     gap: 6px;
     min-height: 52px;
-    padding: 10px 12px;
+    // Right gutter reserved for the pair tag / check mark: text width is
+    // constant, so nothing re-wraps when a pair is formed or checked.
+    padding: 5px 40px 5px 5px;
     font-size: 14px;
     font-family: inherit;
     line-height: 1.45;
@@ -97,7 +99,6 @@
   // "↔ G" / "↔ 3" partner tag — text redundancy for the color tint,
   // so pairs stay identifiable for color-blind students.
   &__tag {
-    margin-left: auto;
     flex: 0 0 auto;
     padding: 2px 6px;
     font-size: 11px;
@@ -110,7 +111,6 @@
   // ✓ / ✕ shown instead of the tag after "Check answers" — flat ink,
   // no badge fill, readable in both themes.
   &__mark {
-    margin-left: auto;
     flex: 0 0 auto;
     font-size: 15px;
     font-weight: 800;
@@ -123,6 +123,16 @@
     &.is-bad {
       color: $red;
     }
+  }
+
+  // Tag & mark sit in the reserved right gutter, vertically centered —
+  // never inline with the word text (strip marks stay inline).
+  .matching__item .matching__tag,
+  .matching__item .matching__mark {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
   }
 }
 
@@ -158,7 +168,6 @@
     align-items: center;
     gap: 6px;
     flex: 0 0 auto;
-    max-width: 260px;
     padding: 8px 12px;
     font-size: 13px;
     line-height: 1.4;
