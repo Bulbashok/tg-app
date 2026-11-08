@@ -190,15 +190,33 @@ bot.command("list", async (ctx) => {
 });
 
 // --- Notify the teacher about a student submission (from the webhook) --------
+type StudentError = { taskId?: unknown; your?: unknown; correct?: unknown };
+
 export async function alertTeacher(payload: {
   exerciseTitle: string;
   studentName: string;
   score: string;
   errorsCount: number;
+  errors?: StudentError[];
 }): Promise<void> {
-  await bot.api.sendMessage(
-    Number(env.teacherId),
+  let text =
     `📥 New result\n\n👤 ${payload.studentName}\n📘 ${payload.exerciseTitle}\n` +
-      `🏆 Score: ${payload.score}\n❌ Errors: ${payload.errorsCount}`,
-  );
+    `🏆 Score: ${payload.score}\n❌ Errors: ${payload.errorsCount}`;
+
+  // Itemized mistakes so the teacher can review without opening the app.
+  const clip = (v: unknown, n = 60) =>
+    String(v ?? "—").replace(/\s+/g, " ").trim().slice(0, n);
+  const lines = (payload.errors ?? [])
+    .slice(0, 20) // Telegram limit guard; teacher sees the first 20
+    .map(
+      (e, i) =>
+        `${i + 1}) №${clip(e.taskId, 8)}: ${clip(e.your)} → ${clip(e.correct)}`,
+    );
+  if (lines.length) {
+    text += `\n\n❌ Mistakes:\n${lines.join("\n")}`;
+    if (payload.errorsCount > lines.length)
+      text += `\n… and ${payload.errorsCount - lines.length} more`;
+  }
+
+  await bot.api.sendMessage(Number(env.teacherId), text);
 }

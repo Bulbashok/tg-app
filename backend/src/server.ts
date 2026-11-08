@@ -68,6 +68,7 @@ app.post("/api/submit", async (req, res) => {
         studentName: user.name,
         score: String(score).slice(0, 20),
         errorsCount: Array.isArray(errors) ? errors.length : 0,
+        errors: Array.isArray(errors) ? errors : [],
       });
     } catch (err) {
       console.error("teacher alert skipped:", describeTelegramError(err));
