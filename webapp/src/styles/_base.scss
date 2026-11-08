@@ -1,5 +1,37 @@
 @use "variables" as *;
 
+// Theme tokens -------------------------------------------------------------
+// Light is the default; dark applies when Telegram reports a dark chat theme
+// (data-theme set by applyTelegramTheme) or, standalone, when the OS is dark.
+:root {
+  --ok-fg: #2e9e4f;
+  --ok-bg: rgba(46, 158, 79, 0.14);
+  --err-fg: #d93025;
+  --err-bg: rgba(217, 48, 37, 0.13);
+  --neutral-bg: rgba(120, 130, 145, 0.16);
+  --line-color: rgba(120, 130, 145, 0.45);
+}
+
+:root[data-theme="dark"] {
+  --ok-fg: #5ec97a;
+  --ok-bg: rgba(94, 201, 122, 0.16);
+  --err-fg: #ff7a6e;
+  --err-bg: rgba(255, 122, 110, 0.15);
+  --neutral-bg: rgba(255, 255, 255, 0.09);
+  --line-color: rgba(255, 255, 255, 0.22);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ok-fg: #5ec97a;
+    --ok-bg: rgba(94, 201, 122, 0.16);
+    --err-fg: #ff7a6e;
+    --err-bg: rgba(255, 122, 110, 0.15);
+    --neutral-bg: rgba(255, 255, 255, 0.09);
+    --line-color: rgba(255, 255, 255, 0.22);
+  }
+}
+
 // App shell / layout ----------------------------------------------------------
 * {
   box-sizing: border-box;

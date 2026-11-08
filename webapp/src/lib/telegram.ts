@@ -19,6 +19,7 @@ export interface WebApp {
   initDataUnsafe: InitDataUnsafe;
   colorScheme: "light" | "dark";
   themeParams: Record<string, string>;
+  onEvent?: (event: string, handler: () => void) => void;
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;
   HapticFeedback?: {
@@ -38,6 +39,19 @@ declare global {
 }
 
 export const tg: WebApp | undefined = window.Telegram?.WebApp;
+
+/**
+ * Mirror Telegram's light/dark scheme onto <html data-theme="…"> so our CSS
+ * tokens can switch with the chat theme (which may differ from the OS one).
+ * Also follows live theme changes while the app is open.
+ */
+export function applyTelegramTheme(): void {
+  const set = () => {
+    if (tg?.colorScheme) document.documentElement.dataset.theme = tg.colorScheme;
+  };
+  set();
+  tg?.onEvent?.("themeChanged", set);
+}
 
 /** True when running inside the Telegram WebView (not a plain browser tab). */
 export const isTelegramEnv = (): boolean => !!tg?.initDataUnsafe?.user;

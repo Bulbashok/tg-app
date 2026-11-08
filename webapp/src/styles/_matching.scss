@@ -70,7 +70,8 @@
     font-size: 12px;
     font-weight: 700;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.06);
+    background: $neutral-soft;
+    color: $text;
   }
 
   &__dot {

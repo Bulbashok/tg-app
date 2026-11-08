@@ -11,10 +11,17 @@ $muted: var(--tg-theme-hint-color, #8a97a5);
 $accent: var(--tg-theme-button-color, #3390ec);
 $accent-text: var(--tg-theme-button-text-color, #ffffff);
 
-$green: #34a853;
-$green-bg: #e6f4ea;
-$red: #d93025;
-$red-bg: #fce8e6;
+// Status colors are CSS custom properties (defined in _base.scss) so they
+// flip with light/dark themes; backgrounds are translucent to sit on any card.
+$green: var(--ok-fg, #2e9e4f);
+$green-bg: var(--ok-bg, rgba(46, 158, 79, 0.14));
+$red: var(--err-fg, #d93025);
+$red-bg: var(--err-bg, rgba(217, 48, 37, 0.13));
+
+// Theme-neutral surfaces (num chips, pools, dashed drop hints): visible in
+// both schemes, unlike pure black/white overlays.
+$neutral-soft: var(--neutral-bg, rgba(120, 130, 145, 0.16));
+$line: var(--line-color, rgba(120, 130, 145, 0.45));
 
 // Pair accent palette for the matching task.
 $pair-colors: (

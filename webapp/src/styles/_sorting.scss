@@ -16,7 +16,7 @@
     min-height: 120px;
     padding: 10px;
     background: $card;
-    border: 2px dashed rgba(0, 0, 0, 0.12);
+    border: 2px dashed $line;
     border-radius: $radius-lg;
     display: flex;
     flex-direction: column;
@@ -52,7 +52,7 @@
     gap: 8px;
     min-height: 56px;
     padding: 12px;
-    background: rgba(0, 0, 0, 0.03);
+    background: $neutral-soft;
     border-radius: $radius-lg;
 
     &.is-over {
