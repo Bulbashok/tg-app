@@ -58,7 +58,9 @@ export const wordFormSchema = z.object({
     .array(
       z.object({
         id: z.number(),
-        before: z.string().min(1),
+        // May be empty when the blank sits at the very start of the sentence
+        // ("______ (hurt) badly in the past, she found…").
+        before: z.string(),
         after: z.string().default(""),
         hint: z.string().min(1),
         answer: z.string().min(1),
@@ -85,11 +87,7 @@ export interface ExerciseRow {
   title: string;
   instruction: string;
   task_type: TaskType;
-  content:
-    | GapFillContent
-    | MatchingContent
-    | SortingContent
-    | WordFormContent;
+  content: GapFillContent | MatchingContent | SortingContent | WordFormContent;
   created_at: string;
 }
 

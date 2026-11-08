@@ -47,7 +47,8 @@ export const tg: WebApp | undefined = window.Telegram?.WebApp;
  */
 export function applyTelegramTheme(): void {
   const set = () => {
-    if (tg?.colorScheme) document.documentElement.dataset.theme = tg.colorScheme;
+    if (tg?.colorScheme)
+      document.documentElement.dataset.theme = tg.colorScheme;
   };
   set();
   tg?.onEvent?.("themeChanged", set);

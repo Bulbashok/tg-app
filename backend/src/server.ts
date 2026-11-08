@@ -60,12 +60,18 @@ app.post("/api/submit", async (req, res) => {
       .eq("id", exerciseId)
       .single();
 
-    await alertTeacher({
-      exerciseTitle: ex?.title ?? "Exercise",
-      studentName: user.name,
-      score: String(score).slice(0, 20),
-      errorsCount: Array.isArray(errors) ? errors.length : 0,
-    });
+    // Teacher notification must NOT fail the student's submission: if the
+    // DM is rate-limited (429) or blocked, the score is already saved.
+    try {
+      await alertTeacher({
+        exerciseTitle: ex?.title ?? "Exercise",
+        studentName: user.name,
+        score: String(score).slice(0, 20),
+        errorsCount: Array.isArray(errors) ? errors.length : 0,
+      });
+    } catch (err) {
+      console.error("teacher alert skipped:", describeTelegramError(err));
+    }
 
     res.json({ ok: true });
   } catch (err) {
@@ -77,7 +83,24 @@ app.post("/api/submit", async (req, res) => {
 // Start HTTP + bot polling together.
 app.listen(env.port, () => console.log(`HTTP ready on :${env.port}`));
 
-bot.catch((err) => console.error("bot error", err));
+/**
+ * grammY wraps every failed Telegram API call in GrammyError; the raw stack
+ * top is useless in logs — surface method + code + description instead.
+ */
+function describeTelegramError(err: unknown): string {
+  const e = err as {
+    method?: string;
+    error_code?: number;
+    description?: string;
+  };
+  if (e?.method)
+    return `${e.method} -> ${e.error_code ?? ""} ${e.description ?? ""}`.trim();
+  return err instanceof Error ? err.message : String(err);
+}
+
+bot.catch((err) =>
+  console.error("bot error:", describeTelegramError(err.error)),
+);
 
 // Long polling (no public webhook/TLS needed on Render). Stop cleanly on
 // SIGTERM/SIGINT so Render restarts don't leave a dangling getUpdates lock.

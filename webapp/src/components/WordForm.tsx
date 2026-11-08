@@ -22,9 +22,7 @@ export default function WordForm({
     const item = content.items.find((it) => it.id === id);
     if (!item) return false;
     const your = normText(answers[`wf-${id}`] ?? "");
-    return [item.answer, ...(item.alt ?? [])]
-      .map(normText)
-      .includes(your);
+    return [item.answer, ...(item.alt ?? [])].map(normText).includes(your);
   };
 
   return (

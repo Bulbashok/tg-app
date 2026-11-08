@@ -1,9 +1,10 @@
 // GrammY bot: teacher-only image ingestion -> AI vision parse -> approval -> save.
 import { Bot, InlineKeyboard, Context } from "grammy";
+import { ZodError } from "zod";
 import { env, isTeacher } from "./env.js";
 import { supabase } from "./supabase.js";
 import { storeTelegramPhoto } from "./storage.js";
-import { parseImageToExercise } from './ai.js';
+import { parseImageToExercise } from "./ai.js";
 import { formatPreview } from "./preview.js";
 import { putDraft, popDraft } from "./draftStore.js";
 import type { ExerciseRow } from "./types.js";
@@ -83,10 +84,25 @@ bot.on("message", async (ctx, next) => {
       reply_markup: kb,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    await ctx.reply(`⚠️ Could not parse this page:\n${msg.slice(0, 900)}`);
+    await ctx.reply(`⚠️ Could not parse this page:\n${describeParseError(err)}`);
   }
 });
+
+/** Turn a thrown error into a short human-readable line for the teacher.
+ * Zod validation failures are arrays of {path,message} -> render them nicely. */
+function describeParseError(err: unknown): string {
+  if (err instanceof ZodError) {
+    return (
+      "AI JSON не прошёл проверку:\n" +
+      err.issues
+        .map((i) => `• ${i.path.join(".") || "(root)"}: ${i.message}`)
+        .join("\n")
+        .slice(0, 850)
+    );
+  }
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.slice(0, 900);
+}
 
 // --- Approval callbacks ------------------------------------------------------
 bot.callbackQuery(/^(confirm|cancel):([0-9a-f-]{8})$/, async (ctx: Context) => {
@@ -94,7 +110,7 @@ bot.callbackQuery(/^(confirm|cancel):([0-9a-f-]{8})$/, async (ctx: Context) => {
 
   // NOTE: grammY's ctx.match is a full RegExpMatchArray ([0] = whole string),
   // so parse the raw callback data directly instead.
-  const [action, draftId] = (ctx.callbackQuery?.data ?? '').split(':');
+  const [action, draftId] = (ctx.callbackQuery?.data ?? "").split(":");
   await ctx.answerCallbackQuery();
 
   if (action === "cancel") {

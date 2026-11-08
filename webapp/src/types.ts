@@ -30,11 +30,7 @@ export interface Exercise {
   title: string;
   instruction: string;
   task_type: TaskType;
-  content:
-    | GapFillContent
-    | MatchingContent
-    | SortingContent
-    | WordFormContent;
+  content: GapFillContent | MatchingContent | SortingContent | WordFormContent;
   created_at: string;
 }
 

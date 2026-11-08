@@ -122,7 +122,7 @@ export async function parseImageToExercise(
       },
     ],
   });
-  
+
   const choice = completion.choices[0];
   if (choice?.finish_reason === "length") {
     throw new Error(

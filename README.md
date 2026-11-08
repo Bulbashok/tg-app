@@ -75,11 +75,11 @@ Deploy to Vercel (framework **Vite**, output `dist`). Then in **BotFather**:
 
 ## Security model
 
-| Secret                                                            | Where it lives                         | Reachable by students?                       |
-| ----------------------------------------------------------------- | -------------------------------------- | -------------------------------------------- |
+| Secret                                                          | Where it lives                         | Reachable by students?                       |
+| --------------------------------------------------------------- | -------------------------------------- | -------------------------------------------- |
 | `TELEGRAM_BOT_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, `AI_API_KEY` | backend `.env` only                    | ❌ no                                        |
-| `SUPABASE_ANON_KEY`                                               | webapp bundle                          | ✅ (by design) but RLS = read exercises only |
-| Student identity                                                  | signed `initData` verified server-side | ✅ trusted after HMAC check                  |
+| `SUPABASE_ANON_KEY`                                             | webapp bundle                          | ✅ (by design) but RLS = read exercises only |
+| Student identity                                                | signed `initData` verified server-side | ✅ trusted after HMAC check                  |
 
 - Teacher-only ingestion via `TELEGRAM_TEACHER_ID`.
 - All writes go through the backend (service role bypasses RLS); the anon key can only **read**
