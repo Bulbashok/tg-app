@@ -7,6 +7,7 @@ import { fetchExercise, submitResult, fetchLastMistakes } from "./lib/api";
 import { tg, haptic } from "./lib/telegram";
 import { scoreExercise, isComplete, type Answers } from "./lib/scoring";
 import { filterExerciseToMistakes } from "./lib/retry";
+import { normalizeExercise } from "./lib/normalize";
 import { MOCK_EXERCISES, mockKeyFromUrl } from "./dev/mocks";
 import type { Exercise, SubmissionResult } from "./types";
 import GapFill from "./components/GapFill";
@@ -57,7 +58,10 @@ export default function App() {
       return;
     }
     fetchExercise(exerciseId)
-      .then(async (ex) => {
+      .then(async (fetched) => {
+        // Entry-group numbering is a contract the renderer relies on, so
+        // normalize even stored rows parsed before the backend did it.
+        const ex = normalizeExercise(fetched);
         if (!retryLast) return setExercise(ex);
         // Retry mode: filter to the last attempt mistakes. Any failure
         // (no history, network) degrades to the full exercise — the

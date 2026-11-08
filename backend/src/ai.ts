@@ -65,7 +65,7 @@ content schemas:
 - word-form: {
     "items": [{
       "id": 1,
-      "sentence": 10,                            // textbook number of the SENTENCE this blank belongs to,
+      "sentence": 1,                             // number of the textbook ENTRY (1, 2, 3...) this blank belongs to,
       "before": "We are waiting for his first novel",   // sentence text left of the blank,
       "after":  "in England.",                          // text right of the blank (may be "")
       "hint":   "publish",                              // base word from brackets / given key word
@@ -73,11 +73,12 @@ content schemas:
       "alt":    ["to get published"]                    // optional accepted alternatives
     }, ...] (4-13 items)
   }
-  For word-form, gaps are numbered 1..n in the app itself; "sentence" only
-  groups them: a sentence with TWO blanks (e.g. a question plus its short
-  answer on one numbered line) becomes two items sharing ONE sentence number,
-  so the app can keep them together under one entry. NEVER split one
-  numbered textbook sentence into separately numbered exercises.
+  For word-form, "sentence" is the number of the textbook ENTRY (the exercise
+  is renumbered 1..N by the app, so never copy page numbers like 10, 12).
+  Several sentences can belong to ONE entry — e.g. a question and its short
+  answer form a single numbered item: ALL their gaps must share that ONE
+  sentence number. NEVER split one entry into several numbers, NEVER give
+  two different entries the same number.
   For key word transformation ("Do not change the word given"): the "answer"
   must contain the hint word unchanged, plus the other words needed.
 

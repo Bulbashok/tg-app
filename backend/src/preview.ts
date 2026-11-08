@@ -39,8 +39,13 @@ export function formatPreview(ex: ExerciseRow): string {
       const c = ex.content as WordFormContent;
       const rows = c.items.map((it, i) => {
         const alt = it.alt?.length ? ` | also: ${it.alt.join(", ")}` : "";
-        // Running gap number, same as the app shows; `sentence` only groups.
-        return `${i + 1}) ${it.before} [${it.answer}] ${it.after} (${it.hint})${alt}${it.sentence ? ` [sent ${it.sentence}]` : ""}`;
+        // Same numbering the student sees: entry number, '-' for a second
+        // gap glued to the previous entry (normalized to 1..N already).
+        const num =
+          i > 0 && it.sentence !== undefined && it.sentence === c.items[i - 1].sentence
+            ? "-"
+            : String(it.sentence ?? i + 1);
+        return `${num}) ${it.before} [${it.answer}] ${it.after} (${it.hint})${alt}`;
       });
       return `${header}\n${rows.join("\n")}\n\n✍️ Ученик печатает ответ сам (без word bank)`;
     }

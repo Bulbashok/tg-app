@@ -58,8 +58,9 @@ export const wordFormSchema = z.object({
     .array(
       z.object({
         id: z.number(),
-        // Textbook sentence number: one sentence may contain several blanks
-        // (a Q&A line counts as one). Gaps of the same sentence share it.
+        // Number of the textbook ENTRY this blank belongs to: one entry may
+        // hold several sentences (a question + its answer), their gaps share
+        // it. Renumbered to sequential 1..N by normalizeWordFormItems.
         sentence: z.number().optional(),
         // May be empty when the blank sits at the very start of the sentence
         // ("______ (hurt) badly in the past, she found…").
@@ -94,6 +95,27 @@ export interface ExerciseRow {
   created_at: string;
 }
 
+/**
+ * Word-form items may carry a `sentence` group key from the model. Turn it
+ * into guaranteed sequential exercise numbers 1..N: consecutive items with
+ * the same value merge into one entry, every new value opens the next one.
+ * Absolute numbers don't matter — only equality/changes between neighbours.
+ * Idempotent, so stored rows normalize the same way on every read path.
+ */
+export function normalizeWordFormItems(
+  items: { sentence?: number }[],
+): void {
+  if (!items.some((it) => typeof it.sentence === "number")) return;
+  let group = 0;
+  let prev: number | null = null;
+  for (const it of items) {
+    const s = it.sentence ?? null;
+    if (s !== prev) group++;
+    it.sentence = group;
+    prev = s;
+  }
+}
+
 /** Validate an AI-produced draft; throws with a readable reason on failure. */
 export function parseExerciseDraft(raw: unknown): ExerciseRow {
   const base = exerciseDraftSchema.parse(raw) as {
@@ -109,5 +131,8 @@ export function parseExerciseDraft(raw: unknown): ExerciseRow {
     "word-form": wordFormSchema,
   }[base.task_type];
   const content = contentSchema.parse(base.content) as ExerciseRow["content"];
+  if (base.task_type === "word-form") {
+    normalizeWordFormItems((content as WordFormContent).items);
+  }
   return { ...base, content, id: "", created_at: "" }; // id assigned by Postgres on insert
 }

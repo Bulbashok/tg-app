@@ -27,15 +27,13 @@ export default function WordForm({
     return [item.answer, ...(item.alt ?? [])].map(normText).includes(your);
   };
 
-  // Number label per gap: running 1..n position. `sentence` only groups
-  // gaps of one textbook sentence (continuation lines) — it never renumbers.
-  const numbered = content.items.map((item, i) => ({
-    item,
-    num: i + 1,
-    // Continuation gap of the same sentence: no repeated number.
-    cont: i > 0 && item.sentence !== undefined &&
-      item.sentence === content.items[i - 1].sentence,
-  }));
+  // One label per gap: entry numbers are sequential 1..N (normalized on
+  // load), gaps after the first in an entry show no number (bracket line).
+  const numbered = content.items.map((item, i) => {
+    const prev = i > 0 ? content.items[i - 1].sentence : undefined;
+    const sent = item.sentence ?? i + 1;
+    return { item, num: sent, cont: item.sentence !== undefined && item.sentence === prev };
+  });
 
   return (
     <div className="word-form">
