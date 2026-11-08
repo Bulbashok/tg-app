@@ -26,18 +26,45 @@ function shareLink(exerciseId: string): string {
 }
 
 // --- Commands ---------------------------------------------------------------
-bot.command("start", (ctx) => {
-  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.reply("This bot is private.");
-  return ctx.reply(
-    "👩‍🏫 Teacher console ready.\n\n" +
-      "Send a screenshot of a textbook exercise and I will turn it into an " +
-      "interactive task. Review my draft, then tap ✅ to publish a student link.",
-  );
+bot.command("start", async (ctx) => {
+  const from = ctx.from;
+  if (!from) return;
+  if (isTeacher(from.id)) {
+    return ctx.reply(
+      "👩‍🏫 Teacher console ready.\n\n" +
+        "Send a screenshot of a textbook exercise and I will turn it into an " +
+        "interactive task. Review my draft, then tap ✅ to publish and assign it.",
+      { reply_markup: new InlineKeyboard().text("📚 Library", "lib:gap-fill:0") },
+    );
+  }
+  // Student: register on first /start, then show their dashboard.
+  await upsertStudent(from);
+  const { text, kb } = await buildMyExercises(from.id);
+  return ctx.reply(text, { reply_markup: kb });
 });
 
 bot.command("help", (ctx) =>
-  ctx.reply("Send a textbook photo, or /list to see published exercises."),
+  ctx.reply(
+    "Teacher: send a textbook photo to create an exercise, /library to browse.\n" +
+      "Student: /start opens your exercise list.",
+  ),
 );
+
+// --- Shared little helpers ---------------------------------------------------
+function fmtDate(iso: string): string {
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Register/refresh a student row from a Telegram `from` object. */
+async function upsertStudent(from: { id: number; first_name: string; username?: string }) {
+  await supabase
+    .from("students")
+    .upsert(
+      { telegram_id: from.id, name: from.first_name || from.username || "Student" },
+      { onConflict: "telegram_id" },
+    );
+}
 
 // --- Image ingestion (teacher only) -----------------------------------------
 // Accepts BOTH compressed photos and raw image documents: desktop Telegram
@@ -145,25 +172,293 @@ bot.callbackQuery(/^(confirm|cancel):([0-9a-f-]{8})$/, async (ctx: Context) => {
 
   if (error) return ctx.editMessageText(`❌ Save failed: ${error.message}`);
 
-  // Return the Telegram Web App link format the user asked for.
-  const link = webAppLink(data.id);
-  const deep = shareLink(data.id);
-  const kb = new InlineKeyboard().webApp("🎓 Open Exercise", link);
-  if (env.tmeAppUrl) {
-    // Native Telegram share sheet: pick a student, link is sent as text.
-    kb.row().url(
-      "📤 Share with students",
-      `https://t.me/share/url?url=${encodeURIComponent(deep)}&text=${encodeURIComponent(data.title)}`,
-    );
-  }
+  // Publish -> assign step: tap students to add the exercise to their
+  // "My exercises" dashboard; ✅ Done shows the final link message.
+  await renderAssignStep(ctx, { id: data.id, title: data.title });
+});
+
+// --- Library: four task-type tabs over all published exercises --------------
+const LIB_TYPES = [
+  { key: "gap-fill", tab: "🧩 Gap", full: "Gap-fill" },
+  { key: "matching", tab: "🔗 Match", full: "Matching" },
+  { key: "sorting", tab: "🗂 Sort", full: "Sorting" },
+  { key: "word-form", tab: "✍ Forms", full: "Word-form" },
+] as const;
+
+const PAGE_SIZE = 8;
+
+bot.callbackQuery(/^lib:/, async (ctx) => {
+  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.answerCallbackQuery();
+  const [, type, pageStr] = (ctx.callbackQuery?.data ?? "").split(":");
+  const page = Number(pageStr) || 0;
+  await ctx.answerCallbackQuery();
+
+  const offset = page * PAGE_SIZE;
+  const { data, count } = await supabase
+    .from("exercises")
+    .select("id,title,created_at", { count: "exact" })
+    .eq("task_type", type)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + PAGE_SIZE - 1);
+  const rows = data ?? [];
+  const total = count ?? 0;
+  const full = LIB_TYPES.find((t) => t.key === type)?.full ?? "Library";
+
+  const kb = new InlineKeyboard();
+  for (const t of LIB_TYPES)
+    kb.text(t.key === type ? `▣ ${t.tab}` : `  ${t.tab}`, `lib:${t.key}:0`);
+  kb.row();
+  for (const [i, e] of rows.entries())
+    kb.text(`${offset + i + 1}. ${e.title}`.slice(0, 60), `ex:${e.id}`).row();
+  if (offset > 0) kb.text("◀ Prev", `lib:${type}:${page - 1}`);
+  if (offset + rows.length < total) kb.text("Next ▶", `lib:${type}:${page + 1}`);
+
   await ctx.editMessageText(
-    `✅ Published!\n\n📘 ${data.title}\n\n${
-      env.tmeAppUrl
-        ? `🔗 ${deep}\n\n👉 Press "Share" or copy the link above —\nit opens the exercise for any student.`
-        : `👉 Press the button to open the exercise.\n\nℹ️ Telegram strips inline buttons when a\nmessage is forwarded. To share with students,\nregister the Mini App in @BotFather (/newapp)\nand set TME_APP_URL — then links work everywhere.`
-    }`,
+    rows.length
+      ? `📚 ${full} — ${total} exercises · page ${page + 1}/${Math.max(1, Math.ceil(total / PAGE_SIZE))}`
+      : `📚 ${full}\n\nNothing here yet.`,
     { reply_markup: kb },
   );
+});
+
+// One exercise: open / share / get back to the tab.
+bot.callbackQuery(/^ex:/, async (ctx) => {
+  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.answerCallbackQuery();
+  const id = (ctx.callbackQuery?.data ?? "").slice(3);
+  await ctx.answerCallbackQuery();
+  const { data: ex } = await supabase
+    .from("exercises")
+    .select("id,title,instruction,task_type,created_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (!ex)
+    return ctx.reply("Exercise not found (deleted?).");
+
+  const kb = new InlineKeyboard().webApp("🎓 Open", webAppLink(ex.id));
+  if (env.tmeAppUrl)
+    kb.row().url(
+      "📤 Share",
+      `https://t.me/share/url?url=${encodeURIComponent(shareLink(ex.id))}&text=${encodeURIComponent(ex.title)}`,
+    );
+  kb.row().text("↩ Back to library", `lib:${ex.task_type}:0`);
+
+  // Sent as a NEW message so the library list stays browsable.
+  const full = LIB_TYPES.find((t) => t.key === ex.task_type)?.full ?? ex.task_type;
+  await ctx.reply(
+    `📘 ${ex.title}\n${full} · ${fmtDate(ex.created_at)}\n\n${ex.instruction}\n\n🔗 ${shareLink(ex.id)}`,
+    { reply_markup: kb },
+  );
+});
+
+// --- Publish -> assign to students ------------------------------------------
+/** Final "Published" message with open/share buttons (also reached via ✅ Done). */
+function publishFinal(ex: { id: string; title: string }): {
+  text: string;
+  kb: InlineKeyboard;
+} {
+  const kb = new InlineKeyboard().webApp("🎓 Open Exercise", webAppLink(ex.id));
+  if (env.tmeAppUrl)
+    kb.row().url(
+      "📤 Share with students",
+      `https://t.me/share/url?url=${encodeURIComponent(shareLink(ex.id))}&text=${encodeURIComponent(ex.title)}`,
+    );
+  const text = env.tmeAppUrl
+    ? `✅ Published!\n\n📘 ${ex.title}\n\n🔗 ${shareLink(ex.id)}\n\n👉 Press "Share" or copy the link above —\nit opens the exercise for any student.`
+    : `✅ Published!\n\n📘 ${ex.title}\n\n👉 Press the button to open the exercise.\n\nℹ️ Telegram strips inline buttons when a\nmessage is forwarded. To share with students,\nregister the Mini App in @BotFather (/newapp)\nand set TME_APP_URL — then links work everywhere.`;
+  return { text, kb };
+}
+
+/** The step right after publishing: tap student names to assign (any number,
+ * re-tap toggles nothing — assignments are idempotent), then Done. */
+async function renderAssignStep(
+  ctx: Context,
+  ex: { id: string; title: string },
+): Promise<unknown> {
+  const { data: students } = await supabase
+    .from("students")
+    .select("telegram_id,name")
+    .order("created_at", { ascending: true })
+    .limit(20);
+
+  if (!students?.length) {
+    const { text, kb } = publishFinal(ex);
+    return ctx.editMessageText(
+      `${text}\n\nℹ️ No students have opened the bot yet —\nthey appear here after pressing /start.`,
+      { reply_markup: kb },
+    );
+  }
+
+  const { data: asg } = await supabase
+    .from("assignments")
+    .select("students(telegram_id)")
+    .eq("exercise_id", ex.id);
+  const assigned = new Set(
+    (asg ?? [])
+      .map((r: unknown) => {
+        // Embedded many-to-one: object at runtime, array per supabase-js
+        // type inference without generated DB types — accept both.
+        const s = (r as { students?: unknown }).students;
+        const row = (Array.isArray(s) ? s[0] : s) as
+          | { telegram_id?: number }
+          | undefined;
+        return String(row?.telegram_id ?? "");
+      })
+      .filter(Boolean),
+  );
+
+  const kb = new InlineKeyboard();
+  for (const s of students)
+    kb
+      .text(
+        assigned.has(String(s.telegram_id)) ? `✓ ${s.name}` : `👤 ${s.name}`,
+        `as:${ex.id}:${s.telegram_id}`,
+      )
+      .row();
+  kb.text("✅ Done", `done:${ex.id}`);
+
+  return ctx.editMessageText(
+    `✅ Published: ${ex.title}\n\n👥 Tap students to assign (any number).\nThey will find it under "My exercises" here.`,
+    { reply_markup: kb },
+  );
+}
+
+bot.callbackQuery(/^as:/, async (ctx) => {
+  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.answerCallbackQuery();
+  const [, exId, tgId] = (ctx.callbackQuery?.data ?? "").split(":");
+
+  const { data: st } = await supabase
+    .from("students")
+    .select("id,name")
+    .eq("telegram_id", Number(tgId))
+    .maybeSingle();
+  if (!st)
+    return ctx.answerCallbackQuery({
+      text: "Student not registered yet",
+      show_alert: true,
+    });
+
+  const { error } = await supabase
+    .from("assignments")
+    .upsert(
+      { exercise_id: exId, student_id: st.id },
+      { onConflict: "exercise_id,student_id", ignoreDuplicates: true },
+    );
+  await ctx.answerCallbackQuery({
+    text: error ? "Assign failed" : `Assigned to ${st.name} ✓`,
+  });
+  if (error) return;
+
+  // Re-render the same step so the tapped name gets its ✓.
+  const { data: ex } = await supabase
+    .from("exercises")
+    .select("id,title")
+    .eq("id", exId)
+    .single();
+  if (ex) await renderAssignStep(ctx, ex);
+});
+
+bot.callbackQuery(/^done:/, async (ctx) => {
+  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.answerCallbackQuery();
+  const exId = (ctx.callbackQuery?.data ?? "").split(":")[1];
+  await ctx.answerCallbackQuery();
+  const { data: ex } = await supabase
+    .from("exercises")
+    .select("id,title")
+    .eq("id", exId)
+    .single();
+  if (!ex) return;
+  const { text, kb } = publishFinal(ex);
+  await ctx.editMessageText(text, { reply_markup: kb });
+});
+
+// --- Student dashboard: "My exercises" ---------------------------------------
+async function buildMyExercises(
+  tgId: number,
+): Promise<{ text: string; kb: InlineKeyboard }> {
+  const emptyKb = new InlineKeyboard().text("🔄 Refresh", "myex");
+  const { data: st } = await supabase
+    .from("students")
+    .select("id")
+    .eq("telegram_id", tgId)
+    .maybeSingle();
+  if (!st)
+    return { text: "Press /start so I can meet you first.", kb: emptyKb };
+
+  // Assignments + the student's own latest score per exercise, joined here
+  // (PostgREST cannot filter submissions by two foreign keys at once).
+  const [{ data: asg }, { data: subs }] = await Promise.all([
+    supabase
+      .from("assignments")
+      .select("assigned_at, exercises(id,title,task_type)")
+      .eq("student_id", st.id)
+      .order("assigned_at", { ascending: false })
+      .limit(30),
+    supabase
+      .from("submissions")
+      .select("exercise_id, score, submitted_at")
+      .eq("student_id", st.id)
+      .order("submitted_at", { ascending: true })
+      .limit(300),
+  ]);
+
+  const latest = new Map<string, string>();
+  for (const s of subs ?? []) latest.set(String(s.exercise_id), s.score);
+
+  // Embedded many-to-one arrives as a single object; supabase-js types it
+  // as an array without generated DB types — read both shapes safely.
+  const items = (asg ?? [])
+    .map((r: unknown) => {
+      const row = r as { assigned_at: string; exercises?: unknown };
+      const ex = (Array.isArray(row.exercises) ? row.exercises[0] : row.exercises) as
+        | { id: string; title: string }
+        | undefined;
+      return ex ? { ex, at: row.assigned_at } : null;
+    })
+    .filter((it): it is { ex: { id: string; title: string }; at: string } =>
+      !!it,
+    );
+  const pending = items.filter((it) => !latest.has(it.ex.id));
+  const done = items.filter((it) => latest.has(it.ex.id));
+
+  if (!items.length)
+    return {
+      text: "🎓 My exercises\n\nNothing assigned yet.\nYour teacher assigns new exercises here.",
+      kb: emptyKb,
+    };
+
+  let text = "🎓 My exercises\n";
+  if (pending.length) {
+    text += `\n📥 To do (${pending.length}):\n`;
+    for (const it of pending)
+      text += `  • ${it.ex.title} — since ${fmtDate(it.at)}\n`;
+  }
+  if (done.length) {
+    text += `\n✅ Completed (${done.length}):\n`;
+    for (const it of done)
+      text += `  • ${it.ex.title} — ${latest.get(it.ex.id)}\n`;
+  }
+
+  // Buttons mirror the list: pending first (▶), then retryable results (🔁).
+  const kb = new InlineKeyboard();
+  let buttons = 0;
+  for (const it of [...pending, ...done]) {
+    if (buttons >= 15) break;
+    const score = latest.get(it.ex.id);
+    kb.webApp(
+      (score ? `🔁 ${it.ex.title} · ${score}` : `▶️ ${it.ex.title}`).slice(0, 60),
+      webAppLink(it.ex.id),
+    ).row();
+    buttons++;
+  }
+  kb.text("🔄 Refresh", "myex");
+  return { text, kb };
+}
+
+bot.callbackQuery("myex", async (ctx) => {
+  await ctx.answerCallbackQuery();
+  if (!ctx.from) return;
+  const { text, kb } = await buildMyExercises(ctx.from.id);
+  await ctx.editMessageText(text, { reply_markup: kb });
 });
 
 // --- List recent exercises ---------------------------------------------------
