@@ -65,6 +65,7 @@ content schemas:
 - word-form: {
     "items": [{
       "id": 1,
+      "sentence": 10,                            // textbook number of the SENTENCE this blank belongs to,
       "before": "We are waiting for his first novel",   // sentence text left of the blank,
       "after":  "in England.",                          // text right of the blank (may be "")
       "hint":   "publish",                              // base word from brackets / given key word
@@ -72,6 +73,11 @@ content schemas:
       "alt":    ["to get published"]                    // optional accepted alternatives
     }, ...] (4-13 items)
   }
+  For word-form, "id" is a running gap counter (1,2,3...) but "sentence" is the
+  number printed in the book: a sentence with TWO blanks (e.g. a question plus
+  its short answer on one numbered line) becomes two items sharing ONE sentence
+  number — NEVER renumber the following sentences. Omit "sentence" only when
+  the book numbers nothing.
   For key word transformation ("Do not change the word given"): the "answer"
   must contain the hint word unchanged, plus the other words needed.
 

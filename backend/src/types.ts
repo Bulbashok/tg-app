@@ -58,6 +58,9 @@ export const wordFormSchema = z.object({
     .array(
       z.object({
         id: z.number(),
+        // Textbook sentence number: one sentence may contain several blanks
+        // (a Q&A line counts as one). Gaps of the same sentence share it.
+        sentence: z.number().optional(),
         // May be empty when the blank sits at the very start of the sentence
         // ("______ (hurt) badly in the past, she found…").
         before: z.string(),

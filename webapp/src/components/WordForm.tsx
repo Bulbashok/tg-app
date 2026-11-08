@@ -1,6 +1,8 @@
 // 'word-form' view: open cloze / word formation / key word transformation.
 // One numbered sentence per line: text before the blank, a typed input,
 // text after the blank and the (hint) word. No word bank — free typing.
+// A textbook sentence may contain several blanks (Q&A line): they share one
+// number — only the first gap shows it, the rest join under a bracket bar.
 import type { WordFormContent } from "../types";
 import type { Answers } from "../lib/scoring";
 import { normText } from "../lib/scoring";
@@ -25,11 +27,27 @@ export default function WordForm({
     return [item.answer, ...(item.alt ?? [])].map(normText).includes(your);
   };
 
+  // Number label per gap: textbook sentence number when the parser gave
+  // one (or for old exercises without `sentence`, plain 1..n positions).
+  const numbered = content.items.map((item, i) => ({
+    item,
+    num: item.sentence ?? i + 1,
+    // Continuation gap of the same sentence: no repeated number.
+    cont: i > 0 && item.sentence !== undefined &&
+      item.sentence === content.items[i - 1].sentence,
+  }));
+
   return (
     <div className="word-form">
-      {content.items.map((item, i) => (
-        <p className="word-form__line" key={item.id}>
-          <span className="word-form__num">{i + 1}.</span>
+      {numbered.map(({ item, num, cont }) => (
+        <p
+          className={[
+            "word-form__line",
+            cont ? "word-form__line--cont" : "",
+          ].join(" ")}
+          key={item.id}
+        >
+          <span className="word-form__num">{cont ? "" : `${num}.`}</span>
           <span>{item.before}&nbsp;</span>
           <input
             className={[

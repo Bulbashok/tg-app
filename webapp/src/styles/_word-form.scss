@@ -15,6 +15,14 @@
     margin: 0;
     font-size: 15px;
     line-height: 2.1;
+
+    // Second gap of one textbook sentence (Q&A line): glued to the line
+    // above with a bracket bar on the left instead of a repeated number.
+    &--cont {
+      margin-top: -10px;
+      padding-left: 12px;
+      border-left: 2px solid $hairline;
+    }
   }
 
   &__num {

@@ -15,6 +15,8 @@ export interface SortingContent {
 }
 export interface WordFormItem {
   id: number;
+  // Textbook sentence number; several gaps may share one sentence (Q&A line).
+  sentence?: number;
   before: string;
   after: string;
   hint: string;

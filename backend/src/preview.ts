@@ -39,7 +39,9 @@ export function formatPreview(ex: ExerciseRow): string {
       const c = ex.content as WordFormContent;
       const rows = c.items.map((it, i) => {
         const alt = it.alt?.length ? ` | also: ${it.alt.join(", ")}` : "";
-        return `${i + 1}) ${it.before} [${it.answer}] ${it.after} (${it.hint})${alt}`;
+        // Textbook sentence number when present (two gaps may share one).
+        const num = it.sentence ?? i + 1;
+        return `${num}) ${it.before} [${it.answer}] ${it.after} (${it.hint})${alt}`;
       });
       return `${header}\n${rows.join("\n")}\n\n✍️ Ученик печатает ответ сам (без word bank)`;
     }
