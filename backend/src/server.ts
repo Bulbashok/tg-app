@@ -135,15 +135,32 @@ bot.catch((err) =>
   console.error("bot error:", describeTelegramError(err.error)),
 );
 
-// Make the command menu (the "/" list in Telegram) visible to everyone.
-void bot.api
-  .setMyCommands([
-    { command: "start", description: "Open dashboard" },
-    { command: "library", description: "Browse exercises (teacher)" },
-    { command: "list", description: "Latest exercises (teacher)" },
-    { command: "help", description: "How to use this bot" },
-  ])
-  .catch((err) => console.error("setMyCommands failed:", err.message));
+// Command menu (the "/" list in Telegram). Default scope = students see
+// only start/help; teacher chats get the full teacher set via per-chat
+// scope. Handlers enforce isTeacher anyway, this just hides the noise.
+const STUDENT_CMDS = [
+  { command: "start", description: "Open my exercises" },
+  { command: "help", description: "How to use this bot" },
+];
+const TEACHER_CMDS = [
+  { command: "start", description: "Open dashboard" },
+  { command: "library", description: "Browse exercises" },
+  { command: "list", description: "Latest exercises" },
+  { command: "help", description: "How to use this bot" },
+];
+void (async () => {
+  try {
+    await bot.api.setMyCommands(STUDENT_CMDS, {
+      scope: { type: "all_private_chats" },
+    });
+    for (const id of env.teacherIds)
+      await bot.api.setMyCommands(TEACHER_CMDS, {
+        scope: { type: "chat", chat_id: Number(id) },
+      });
+  } catch (err) {
+    console.error("setMyCommands failed:", (err as Error).message);
+  }
+})();
 
 // Long polling (no public webhook/TLS needed on Render). Stop cleanly on
 // SIGTERM/SIGINT so Render restarts don't leave a dangling getUpdates lock.
