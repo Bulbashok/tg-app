@@ -254,6 +254,7 @@ bot.callbackQuery(/^ex:/, async (ctx) => {
       "📤 Share",
       `https://t.me/share/url?url=${encodeURIComponent(shareLink(ex.id))}&text=${encodeURIComponent(ex.title)}`,
     );
+  kb.row().text("🗑 Delete", `del:${ex.id}`);
   kb.row().text("↩ Back to library", `lib:${ex.task_type}:0`);
 
   // Sent as a NEW message so the library list stays browsable.
@@ -262,6 +263,56 @@ bot.callbackQuery(/^ex:/, async (ctx) => {
     `📘 ${ex.title}\n${full} · ${fmtDate(ex.created_at)}\n\n${ex.instruction}\n\n🔗 ${shareLink(ex.id)}`,
     { reply_markup: kb },
   );
+});
+
+// Delete needs a second tap on the same card — cheap guard against
+// wiping a term of exercises by an errant finger.
+bot.callbackQuery(/^del:/, async (ctx) => {
+  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.answerCallbackQuery();
+  const id = (ctx.callbackQuery?.data ?? "").split(":")[1];
+  await ctx.answerCallbackQuery();
+  const { data: ex } = await supabase
+    .from("exercises")
+    .select("id,title")
+    .eq("id", id)
+    .maybeSingle();
+  if (!ex)
+    return ctx.editMessageText("Already deleted.", {
+      reply_markup: new InlineKeyboard(),
+    });
+  await ctx.editMessageText(
+    `🗑 Delete “${ex.title}”?\n\nSubmissions and assignments of this exercise\nwill be deleted too. This cannot be undone.`,
+    {
+      reply_markup: new InlineKeyboard()
+        .text("✅ Yes, delete", `delgo:${ex.id}`)
+        .row()
+        .text("↩ Keep it", `ex:${ex.id}`),
+    },
+  );
+});
+
+bot.callbackQuery(/^delgo:/, async (ctx) => {
+  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.answerCallbackQuery();
+  const id = (ctx.callbackQuery?.data ?? "").split(":")[1];
+  await ctx.answerCallbackQuery();
+  const { data: ex } = await supabase
+    .from("exercises")
+    .select("id,title,task_type")
+    .eq("id", id)
+    .maybeSingle();
+  if (!ex)
+    return ctx.editMessageText("Already deleted.", {
+      reply_markup: new InlineKeyboard(),
+    });
+  const { error } = await supabase.from("exercises").delete().eq("id", id);
+  if (error)
+    return ctx.editMessageText(`❌ Delete failed: ${error.message}`);
+  await ctx.editMessageText(`🗑 Deleted: ${ex.title}`, {
+    reply_markup: new InlineKeyboard().text(
+      "↩ Back to library",
+      `lib:${ex.task_type}:0`,
+    ),
+  });
 });
 
 // --- Publish -> assign to students ------------------------------------------
