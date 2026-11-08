@@ -28,13 +28,20 @@ const ai = new OpenAI(clientOpts);
 const SYSTEM_PROMPT = `You are an exercise generator for an English-language textbook.
 You will receive a screenshot of a textbook page. Convert the visible task into ONE interactive exercise and reply with STRICT JSON only — no markdown, no code fences, no commentary.
 
-Choose the single best "task_type" for the page: "gap-fill", "matching" or "sorting".
+Choose the single best "task_type" for the page: "gap-fill", "matching", "sorting" or "word-form".
+
+Type selection guide:
+- If the task says "Put the verb in brackets into the correct form", "open the
+  brackets", or "Complete the second sentence using the word given" (key word
+  transformation) -> use "word-form". NEVER turn these into gap-fill: there is
+  NO word bank; the student types the answer themselves.
+- gap-fill only when the page itself provides a box/list of words to choose from.
 
 JSON contract (top level):
 {
   "title":       short exercise name, e.g. "Unit 5. Phrasal verbs",
   "instruction": the task instruction shown to the student (in the language of the textbook page),
-  "task_type":   "gap-fill" | "matching" | "sorting",
+  "task_type":   "gap-fill" | "matching" | "sorting" | "word-form",
   "content":     object matching the schema for the chosen task_type
 }
 
@@ -49,12 +56,25 @@ content schemas:
     "categories": [{"id": "cat1", "name": "Food"}, ...] (2-4 groups visible on the page),
     "words":      [{"id": "w1", "text": "apple", "categoryId": "cat1"}, ...] (6-10 words)
   }
+- word-form: {
+    "items": [{
+      "id": 1,
+      "before": "We are waiting for his first novel",   // sentence text left of the blank,
+      "after":  "in England.",                          // text right of the blank (may be "")
+      "hint":   "publish",                              // base word from brackets / given key word
+      "answer": "to be published",                      // expected typed answer (can be several words)
+      "alt":    ["to get published"]                    // optional accepted alternatives
+    }, ...] (4-8 items)
+  }
+  For key word transformation ("Do not change the word given"): the "answer"
+  must contain the hint word unchanged, plus the other words needed.
 
 Rules:
 - Use ONLY material present in the screenshot; never invent extra vocabulary.
-- Answers must be unambiguous single strings (case-insensitive comparison later).
-- Keep the output COMPACT (hard token budget): max 8 gaps, 8 pairs or 10 words —
-  if the page has more items, take the first ones only.
+- Answers must be unambiguous strings, compared case-insensitively
+  (word-form answers may consist of several words).
+- Keep the output COMPACT (hard token budget): max 8 gaps, 8 pairs, 10 words
+  or 8 word-form items — if the page has more items, take the first ones only.
 - No comments, no explanations, no trailing text. Short strings only.
 - Output must be valid JSON parseable by JSON.parse.`;
 

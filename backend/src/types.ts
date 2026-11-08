@@ -2,7 +2,12 @@
 // and mirror the TypeScript types used by the React Mini App.
 import { z } from "zod";
 
-export const taskTypeEnum = z.enum(["gap-fill", "matching", "sorting"]);
+export const taskTypeEnum = z.enum([
+  "gap-fill",
+  "matching",
+  "sorting",
+  "word-form",
+]);
 export type TaskType = z.infer<typeof taskTypeEnum>;
 
 // ---------------------------------------------------------------------------
@@ -44,6 +49,25 @@ export const sortingSchema = z.object({
     .min(2),
 });
 
+// "word-form": open cloze / word formation / key word transformation.
+// Each item is one sentence split around a blank the student types into;
+// `hint` is the bracketed/given base word, `answer` the expected form
+// (may be several words), `alt` optional accepted alternatives.
+export const wordFormSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.number(),
+        before: z.string().min(1),
+        after: z.string().default(""),
+        hint: z.string().min(1),
+        answer: z.string().min(1),
+        alt: z.array(z.string().min(1)).optional(),
+      }),
+    )
+    .min(1),
+});
+
 export const exerciseDraftSchema = z.object({
   title: z.string().min(1).max(120),
   instruction: z.string().min(1).max(500),
@@ -54,13 +78,18 @@ export const exerciseDraftSchema = z.object({
 export type GapFillContent = z.infer<typeof gapFillSchema>;
 export type MatchingContent = z.infer<typeof matchingSchema>;
 export type SortingContent = z.infer<typeof sortingSchema>;
+export type WordFormContent = z.infer<typeof wordFormSchema>;
 
 export interface ExerciseRow {
   id: string;
   title: string;
   instruction: string;
   task_type: TaskType;
-  content: GapFillContent | MatchingContent | SortingContent;
+  content:
+    | GapFillContent
+    | MatchingContent
+    | SortingContent
+    | WordFormContent;
   created_at: string;
 }
 
@@ -76,6 +105,7 @@ export function parseExerciseDraft(raw: unknown): ExerciseRow {
     "gap-fill": gapFillSchema,
     matching: matchingSchema,
     sorting: sortingSchema,
+    "word-form": wordFormSchema,
   }[base.task_type];
   const content = contentSchema.parse(base.content) as ExerciseRow["content"];
   return { ...base, content, id: "", created_at: "" }; // id assigned by Postgres on insert

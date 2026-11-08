@@ -7,6 +7,7 @@ import { tg, haptic } from "./lib/telegram";
 import { scoreExercise, isComplete, type Answers } from "./lib/scoring";
 import type { Exercise, SubmissionResult } from "./types";
 import GapFill from "./components/GapFill";
+import WordForm from "./components/WordForm";
 import Matching from "./components/Matching";
 import Sorting from "./components/Sorting";
 import ResultBanner from "./components/ResultBanner";
@@ -76,6 +77,8 @@ export default function App() {
         return <Matching content={exercise.content as never} {...props} />;
       case "sorting":
         return <Sorting content={exercise.content as never} {...props} />;
+      case "word-form":
+        return <WordForm content={exercise.content as never} {...props} />;
     }
   }, [exercise, answers, revealed, setAnswer]);
 

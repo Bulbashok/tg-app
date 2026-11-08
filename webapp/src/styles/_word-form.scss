@@ -1,0 +1,68 @@
+@use "variables" as *;
+
+// word-form: numbered sentences with free-typed inputs + hint chips --------
+.word-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: $card;
+  border-radius: $radius-lg;
+  padding: 16px 16px 14px;
+  box-shadow: $shadow;
+
+  &__line {
+    margin: 0;
+    font-size: 15px;
+    line-height: 2.1;
+  }
+
+  &__num {
+    margin-right: 6px;
+    color: $muted;
+    font-weight: 700;
+  }
+
+  &__input {
+    display: inline-block;
+    margin: 0 2px;
+    padding: 3px 8px;
+    font-size: 15px;
+    font-family: inherit;
+    color: $text;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid $accent;
+    border-radius: $radius-sm $radius-sm 0 0;
+    outline: none;
+
+    &:focus {
+      background: rgba(51, 144, 236, 0.08);
+    }
+
+    // Post-submit feedback (same language as gap-fill inputs).
+    &.is-correct {
+      border-bottom-color: $green;
+      background: $green-bg;
+      color: $green;
+    }
+
+    &.is-wrong {
+      border-bottom-color: $red;
+      background: $red-bg;
+      color: $red;
+      text-decoration: line-through;
+    }
+  }
+
+  &__hint {
+    margin-left: 6px;
+    color: $accent;
+    font-style: italic;
+  }
+
+  &__answer {
+    margin-left: 8px;
+    color: $green;
+    font-weight: 600;
+  }
+}

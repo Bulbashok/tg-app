@@ -1,5 +1,5 @@
 // Mirror of the backend content schemas (exercises.content jsonb).
-export type TaskType = "gap-fill" | "matching" | "sorting";
+export type TaskType = "gap-fill" | "matching" | "sorting" | "word-form";
 
 export interface GapFillContent {
   passage: string;
@@ -13,13 +13,28 @@ export interface SortingContent {
   categories: { id: string; name: string }[];
   words: { id: string; text: string; categoryId: string }[];
 }
+export interface WordFormItem {
+  id: number;
+  before: string;
+  after: string;
+  hint: string;
+  answer: string;
+  alt?: string[];
+}
+export interface WordFormContent {
+  items: WordFormItem[];
+}
 
 export interface Exercise {
   id: string;
   title: string;
   instruction: string;
   task_type: TaskType;
-  content: GapFillContent | MatchingContent | SortingContent;
+  content:
+    | GapFillContent
+    | MatchingContent
+    | SortingContent
+    | WordFormContent;
   created_at: string;
 }
 

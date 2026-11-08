@@ -3,6 +3,7 @@
 //   gap-fill : answers["gap-<id>"]     = typed/selected word
 //   matching : answers["en-<pairId>"]  = chosen russian item id
 //   sorting  : answers["word-<id>"]    = chosen category id
+//   word-form: answers["wf-<id>"]      = freely typed answer (several words ok)
 // This lets App.tsx score any exercise uniformly and produce
 // submissions.errors details for the teacher.
 import type {
@@ -10,6 +11,7 @@ import type {
   GapFillContent,
   MatchingContent,
   SortingContent,
+  WordFormContent,
   SubmissionResult,
   ErrorDetail,
 } from "../types";
@@ -17,6 +19,8 @@ import type {
 export type Answers = Record<string, string>;
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+// Typed answers may end with punctuation the textbook blank doesn't have.
+export const normText = (s: string) => norm(s).replace(/[.!?]+$/, "");
 
 export function scoreExercise(
   exercise: Exercise,
@@ -76,6 +80,22 @@ export function scoreExercise(
       }
       break;
     }
+    case "word-form": {
+      const c = exercise.content as WordFormContent;
+      for (const item of c.items) {
+        total++;
+        const your = answers[`wf-${item.id}`] ?? "";
+        const accepted = [item.answer, ...(item.alt ?? [])].map(normText);
+        if (accepted.includes(normText(your))) correct++;
+        else
+          errors.push({
+            taskId: item.id,
+            your: your || "—",
+            correct: item.answer,
+          });
+      }
+      break;
+    }
   }
 
   return { score: `${correct}/${total}`, correct, total, errors };
@@ -95,6 +115,10 @@ export function isComplete(exercise: Exercise, answers: Answers): boolean {
   if (exercise.task_type === "sorting")
     (exercise.content as SortingContent).words.forEach((w) =>
       ids.push(`word-${w.id}`),
+    );
+  if (exercise.task_type === "word-form")
+    (exercise.content as WordFormContent).items.forEach((it) =>
+      ids.push(`wf-${it.id}`),
     );
   return ids.every((id) => (answers[id] ?? "").length > 0);
 }

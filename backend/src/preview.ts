@@ -4,6 +4,7 @@ import type {
   GapFillContent,
   MatchingContent,
   SortingContent,
+  WordFormContent,
 } from "./types.js";
 
 export function formatPreview(ex: ExerciseRow): string {
@@ -34,6 +35,14 @@ export function formatPreview(ex: ExerciseRow): string {
       });
       return `${header}\n${byCat.join("\n")}`;
     }
+    case "word-form": {
+      const c = ex.content as WordFormContent;
+      const rows = c.items.map((it, i) => {
+        const alt = it.alt?.length ? ` | also: ${it.alt.join(", ")}` : "";
+        return `${i + 1}) ${it.before} [${it.answer}] ${it.after} (${it.hint})${alt}`;
+      });
+      return `${header}\n${rows.join("\n")}\n\n✍️ Ученик печатает ответ сам (без word bank)`;
+    }
   }
 }
 
@@ -46,5 +55,7 @@ export function totalItems(ex: ExerciseRow): number {
       return (ex.content as MatchingContent).pairs.length;
     case "sorting":
       return (ex.content as SortingContent).words.length;
+    case "word-form":
+      return (ex.content as WordFormContent).items.length;
   }
 }
