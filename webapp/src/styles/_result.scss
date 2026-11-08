@@ -1,6 +1,6 @@
 @use "variables" as *;
 
-// Result banner shown after "Проверить ответы" -------------------------------
+// Result banner shown after "Check answers" --------------------------------
 // Flat paper note with a hairline frame; tone carries the meaning.
 .result {
   padding: 18px;
@@ -62,6 +62,17 @@
     li {
       line-height: 1.55;
     }
+  }
+
+  // AI grammar note under its mistake — quiet ruled insert in the list.
+  &__why {
+    margin: 4px 0 2px;
+    padding-left: 8px;
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.5;
+    border-left: 2px solid currentColor;
+    opacity: 0.85;
   }
 
   &__status {

@@ -21,7 +21,7 @@ export async function submitResult(payload: {
   initData: string; // raw signed string — the backend HMAC-verifies it
   score: string;
   errors: unknown[];
-}): Promise<void> {
+}): Promise<{ hints?: { taskId: number; why: string }[] | null }> {
   const res = await fetch(`${BACKEND_URL}/api/submit`, {
     method: "POST",
     headers: {
@@ -35,4 +35,13 @@ export async function submitResult(payload: {
     }),
   });
   if (!res.ok) throw new Error(`Submit failed (${res.status})`);
+  // { ok, hints } — hints are AI grammar notes for word-form mistakes;
+  // null/absent for other task types and on older backends.
+  try {
+    return (await res.json()) as {
+      hints?: { taskId: number; why: string }[] | null;
+    };
+  } catch {
+    return {};
+  }
 }

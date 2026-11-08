@@ -140,3 +140,83 @@ export async function parseImageToExercise(
   // Throws if the model deviated from the contract — caller shows it to the teacher.
   return parseExerciseDraft(extractJson(raw));
 }
+
+/**
+ * Grammar hints for word-form mistakes. Correctness is decided
+ * deterministically in the app — the AI only explains WHY the required form
+ * fits the sentence and what the student's form would mean. One hint per
+ * mistake, keyed by task id. Any failure returns null: hints are
+ * decoration and must never block or break the submission itself.
+ * Other task types do not use this — a wrong matching pair needs no grammar
+ * explanation.
+ */
+export async function generateFormHints(payload: {
+  mistakes: {
+    taskId: number;
+    your: string;
+    correct: string;
+    before: string;
+    after: string;
+    hint: string;
+  }[];
+}): Promise<{ taskId: number; why: string }[] | null> {
+  if (!payload.mistakes.length) return null;
+
+  const list = payload.mistakes
+    .map(
+      (m) =>
+        `id=${m.taskId}: "${m.before} ___. ${m.after}" (base: ${m.hint}) — student: "${m.your}", correct: "${m.correct}"`,
+    )
+    .join("\n");
+
+  // Hard time budget: Groq answers in <1s normally, but overload retries
+  // could hang the student's request — abort after 8 seconds.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const completion = await ai.chat.completions.create(
+      {
+        model: env.aiModel,
+        temperature: 0.3,
+        // ~1 short sentence per mistake (max 13 items), JSON overhead included.
+        max_completion_tokens: 400,
+        messages: [
+          {
+            role: "system",
+            content:
+              `You are an English grammar coach for a student. For every numbered mistake below, write ONE short neutral explanation (max 120 characters, English, plain text) of why the correct form is required in this exact sentence and what the student's form would mean instead. Do not restate the answers, do not praise.\n` +
+              `Reply with STRICT JSON only: {"hints":[{"id":<taskId>,"why":"..."},...]}\n` +
+              `Include one hint object for every mistake id.`,
+          },
+          { role: "user", content: list },
+        ],
+      },
+      { signal: ctrl.signal },
+    );
+    const raw = completion.choices[0]?.message?.content;
+    if (!raw) return null;
+    const parsed = extractJson(raw) as {
+      hints?: { id?: unknown; why?: unknown }[];
+    };
+    const out = (parsed.hints ?? [])
+      .filter(
+        (h) =>
+          typeof h.id === "number" ||
+          (typeof h.id === "string" && !Number.isNaN(Number(h.id))),
+      )
+      .map((h) => ({
+        taskId: Number(h.id),
+        why: String(h.why ?? "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 200),
+      }))
+      .filter((h) => h.why);
+    return out.length ? out : null;
+  } catch (err) {
+    console.error("form hints skipped:", (err as Error).message);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}

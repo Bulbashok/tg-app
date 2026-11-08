@@ -198,20 +198,26 @@ export async function alertTeacher(payload: {
   score: string;
   errorsCount: number;
   errors?: StudentError[];
+  hints?: { taskId: number; why: string }[] | null;
 }): Promise<void> {
   let text =
     `📥 New result\n\n👤 ${payload.studentName}\n📘 ${payload.exerciseTitle}\n` +
     `🏆 Score: ${payload.score}\n❌ Errors: ${payload.errorsCount}`;
 
   // Itemized mistakes so the teacher can review without opening the app.
+  // Word-form mistakes carry an AI grammar hint on the next line.
+  const hintById = new Map(
+    (payload.hints ?? []).map((h) => [String(h.taskId), h.why]),
+  );
   const clip = (v: unknown, n = 60) =>
     String(v ?? "—").replace(/\s+/g, " ").trim().slice(0, n);
   const lines = (payload.errors ?? [])
     .slice(0, 20) // Telegram limit guard; teacher sees the first 20
-    .map(
-      (e, i) =>
-        `${i + 1}) №${clip(e.taskId, 8)}: ${clip(e.your)} → ${clip(e.correct)}`,
-    );
+    .map((e, i) => {
+      const line = `${i + 1}) №${clip(e.taskId, 8)}: ${clip(e.your)} → ${clip(e.correct)}`;
+      const why = hintById.get(String(e.taskId ?? ""));
+      return why ? `${line}\n   ↳ ${clip(why, 160)}` : line;
+    });
   if (lines.length) {
     text += `\n\n❌ Mistakes:\n${lines.join("\n")}`;
     if (payload.errorsCount > lines.length)

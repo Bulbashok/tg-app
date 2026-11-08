@@ -6,9 +6,16 @@ interface Props {
   result: SubmissionResult;
   notified: boolean;
   notifyError: boolean;
+  // AI grammar notes for word-form mistakes, keyed by taskId.
+  hints: { taskId: number; why: string }[] | null;
 }
 
-export default function ResultBanner({ result, notified, notifyError }: Props) {
+export default function ResultBanner({
+  result,
+  notified,
+  notifyError,
+  hints,
+}: Props) {
   const pct = result.total ? result.correct / result.total : 0;
   const tone = pct === 1 ? "perfect" : pct >= 0.6 ? "good" : "bad";
   const headline =
@@ -17,6 +24,9 @@ export default function ResultBanner({ result, notified, notifyError }: Props) {
       : pct >= 0.6
         ? "Some answers are incorrect."
         : "Many answers are incorrect.";
+
+  const whyFor = (taskId: string | number) =>
+    hints?.find((h) => String(h.taskId) === String(taskId))?.why ?? null;
 
   return (
     <div className={`result result--${tone}`}>
@@ -31,6 +41,9 @@ export default function ResultBanner({ result, notified, notifyError }: Props) {
             {result.errors.map((e, i) => (
               <li key={i}>
                 №{e.taskId}: «{e.your}» → correct: «{e.correct}»
+                {whyFor(e.taskId) && (
+                  <p className="result__why">{whyFor(e.taskId)}</p>
+                )}
               </li>
             ))}
           </ul>

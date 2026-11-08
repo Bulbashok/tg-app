@@ -5,6 +5,7 @@ import express from "express";
 import cors from "cors";
 import { env } from "./env.js";
 import { bot, alertTeacher } from "./bot.js";
+import { generateFormHints } from "./ai.js";
 import { verifyInitData } from "./telegramAuth.js";
 import { supabase } from "./supabase.js";
 
@@ -53,12 +54,42 @@ app.post("/api/submit", async (req, res) => {
     });
     if (subErr) throw new Error(subErr.message);
 
-    // Look up the exercise title for a friendly teacher alert.
+    // Look up the exercise for a friendly teacher alert; word-form also
+    // needs the sentence context (content) to explain each mistake.
     const { data: ex } = await supabase
       .from("exercises")
-      .select("title")
+      .select("title, task_type, content")
       .eq("id", exerciseId)
       .single();
+
+    // Grammar hints per mistake — only for word-form, where "why this form"
+    // is the actual learning moment. null on any failure: the score is
+    // already saved, hints are decoration, never critical.
+    let hints: { taskId: number; why: string }[] | null = null;
+    if (
+      ex?.task_type === "word-form" &&
+      Array.isArray(errors) &&
+      errors.length
+    ) {
+      type Item = { id?: unknown; before?: unknown; after?: unknown; hint?: unknown };
+      const items: Item[] =
+        (ex.content as { items?: Item[] } | null)?.items ?? [];
+      const mistakes = errors
+        .slice(0, 13)
+        .map((e: Record<string, unknown>) => {
+          const item = items.find((it) => String(it.id) === String(e.taskId));
+          return {
+            taskId: Number(e.taskId),
+            your: String(e.your ?? ""),
+            correct: String(e.correct ?? ""),
+            before: String(item?.before ?? ""),
+            after: String(item?.after ?? ""),
+            hint: String(item?.hint ?? ""),
+          };
+        })
+        .filter((m) => Number.isFinite(m.taskId));
+      hints = await generateFormHints({ mistakes });
+    }
 
     // Teacher notification must NOT fail the student's submission: if the
     // DM is rate-limited (429) or blocked, the score is already saved.
@@ -69,12 +100,13 @@ app.post("/api/submit", async (req, res) => {
         score: String(score).slice(0, 20),
         errorsCount: Array.isArray(errors) ? errors.length : 0,
         errors: Array.isArray(errors) ? errors : [],
+        hints,
       });
     } catch (err) {
       console.error("teacher alert skipped:", describeTelegramError(err));
     }
 
-    res.json({ ok: true });
+    res.json({ ok: true, hints });
   } catch (err) {
     console.error("submit failed", err);
     res.status(502).json({ error: "processing failed" });

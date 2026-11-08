@@ -27,6 +27,10 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false);
   const [notified, setNotified] = useState(false);
   const [notifyError, setNotifyError] = useState(false);
+  // AI grammar hints for word-form mistakes, returned by /api/submit.
+  const [hints, setHints] = useState<{ taskId: number; why: string }[] | null>(
+    null,
+  );
 
   // Load exercise JSON from Supabase (anon read of the exercises table),
   // or straight from the bundled mocks in dev ?mock= mode.
@@ -62,23 +66,39 @@ export default function App() {
     if (!exercise) return;
     const scored = scoreExercise(exercise, answers);
     setResult(scored);
+    setHints(null);
     haptic(scored.correct === scored.total ? "success" : "error");
 
     // One backend call: verify initData -> save submission -> alert teacher.
     // Skipped entirely in mock mode — UI-only iteration, nothing is sent.
     if (mockKey) {
       setNotified(true);
+      // Static stand-ins so the hint layout is previewable offline: shown
+      // only for word-form, attached to the first two actual mock mistakes.
+      if (exercise.task_type === "word-form" && scored.errors.length) {
+        const samples = [
+          "Visible evidence now points to a planned future — use 'going to', not present continuous.",
+          "A finished past time marker requires past simple passive, not present perfect.",
+        ];
+        setHints(
+          scored.errors.slice(0, 2).map((e, i) => ({
+            taskId: Number(e.taskId),
+            why: samples[i % samples.length],
+          })),
+        );
+      }
       return;
     }
     setSubmitting(true);
     try {
-      await submitResult({
+      const out = await submitResult({
         exerciseId: exercise.id,
         initData: tg?.initData ?? "",
         score: scored.score,
         errors: scored.errors,
       });
       setNotified(true);
+      setHints(out.hints ?? null);
     } catch {
       setNotifyError(true);
     } finally {
@@ -142,6 +162,7 @@ export default function App() {
           result={result}
           notified={notified}
           notifyError={notifyError}
+          hints={hints}
         />
       )}
 
