@@ -75,6 +75,27 @@
     opacity: 0.85;
   }
 
+  // "Practice mistakes" CTA — forest primary button, same keycap edge as
+  // the main submit; tone-independent so it never blends into red paper.
+  &__retry {
+    margin-top: 4px;
+    width: 100%;
+    padding: 13px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    color: $accent-text;
+    background: $accent;
+    border: none;
+    border-radius: $radius-md;
+    border-bottom: 3px solid var(--accent-edge, #1f4019);
+    cursor: pointer;
+
+    &:active {
+      filter: brightness(0.92);
+    }
+  }
+
   &__status {
     margin: 0;
     font-size: 13px;

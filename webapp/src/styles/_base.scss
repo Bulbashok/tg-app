@@ -144,6 +144,19 @@ body {
     line-height: 1.6;
   }
 
+  // Retry-mode chip: what this session actually is (only failed items).
+  &__retry-note {
+    margin: 8px 0 0;
+    display: inline-block;
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: $accent;
+    background: $sand;
+    border: 1px solid $hairline;
+    border-radius: $radius-sm;
+  }
+
   &__body {
     display: flex;
     flex-direction: column;
@@ -185,6 +198,17 @@ body {
   color: $muted;
   padding: 44px 16px;
   line-height: 1.6;
+
+  // Anchor variant: "Open the full exercise" in the retry-empty state.
+  &--link {
+    display: inline-block;
+    padding: 10px 18px;
+    color: $accent;
+    font-weight: 600;
+    text-decoration: underline;
+    border: 1px solid $hairline;
+    border-radius: $radius-md;
+  }
 
   &--error {
     color: $red;

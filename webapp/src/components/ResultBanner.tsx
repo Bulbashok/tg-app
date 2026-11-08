@@ -8,6 +8,9 @@ interface Props {
   notifyError: boolean;
   // AI grammar notes for word-form mistakes, keyed by taskId.
   hints: { taskId: number; why: string }[] | null;
+  // Reopen the exercise with only these mistakes (?retry=last). Shown only
+  // after the submission is saved — the retry list reads it from the DB.
+  onRetry?: () => void;
 }
 
 export default function ResultBanner({
@@ -15,6 +18,7 @@ export default function ResultBanner({
   notified,
   notifyError,
   hints,
+  onRetry,
 }: Props) {
   const pct = result.total ? result.correct / result.total : 0;
   const tone = pct === 1 ? "perfect" : pct >= 0.6 ? "good" : "bad";
@@ -48,6 +52,12 @@ export default function ResultBanner({
               </li>
             ))}
           </ul>
+          {onRetry && notified && (
+            <button type="button" className="result__retry" onClick={onRetry}>
+              🎯 Practice {result.errors.length} mistake
+              {result.errors.length === 1 ? "" : "s"}
+            </button>
+          )}
         </>
       )}
       <p className="result__status">

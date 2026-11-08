@@ -113,6 +113,44 @@ app.post("/api/submit", async (req, res) => {
   }
 });
 
+// Retry mode: the mistake ids of this student's latest attempt, so the
+// Mini App can reopen the exercise with only the failed items. Same
+// initData HMAC as /api/submit — a student can only ever read their own.
+app.get("/api/last-mistakes", async (req, res) => {
+  const initData = String(req.headers["x-tg-init-data"] ?? "");
+  const user = verifyInitData(initData);
+  if (!user) return res.status(401).json({ error: "invalid initData" });
+  const exerciseId = String(req.query.exercise ?? "");
+  if (!exerciseId) return res.status(400).json({ error: "missing exercise" });
+
+  try {
+    const { data: student } = await supabase
+      .from("students")
+      .select("id")
+      .eq("telegram_id", user.id)
+      .maybeSingle();
+    if (!student) return res.json({ ok: true, errors: null });
+
+    const { data: sub } = await supabase
+      .from("submissions")
+      .select("score,errors")
+      .eq("student_id", student.id)
+      .eq("exercise_id", exerciseId)
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!sub) return res.json({ ok: true, errors: null });
+
+    const errors = (Array.isArray(sub.errors) ? sub.errors : [])
+      .map((e: Record<string, unknown>) => ({ taskId: String(e.taskId ?? "") }))
+      .filter((e: { taskId: string }) => e.taskId);
+    res.json({ ok: true, score: sub.score, errors });
+  } catch (err) {
+    console.error("last-mistakes failed", err);
+    res.status(502).json({ error: "processing failed" });
+  }
+});
+
 // Start HTTP + bot polling together.
 app.listen(env.port, () => console.log(`HTTP ready on :${env.port}`));
 

@@ -3,9 +3,10 @@
 // Dev-only ?mock=<task_type> mode renders bundled exercises without any backend.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useExerciseId, useTelegramInit } from "./hooks/useTelegram";
-import { fetchExercise, submitResult } from "./lib/api";
+import { fetchExercise, submitResult, fetchLastMistakes } from "./lib/api";
 import { tg, haptic } from "./lib/telegram";
 import { scoreExercise, isComplete, type Answers } from "./lib/scoring";
+import { filterExerciseToMistakes } from "./lib/retry";
 import { MOCK_EXERCISES, mockKeyFromUrl } from "./dev/mocks";
 import type { Exercise, SubmissionResult } from "./types";
 import GapFill from "./components/GapFill";
@@ -19,6 +20,10 @@ export default function App() {
   const exerciseId = useExerciseId();
   // Mock mode works only in `npm run dev` builds; tree-shaken from prod.
   const mockKey = import.meta.env.DEV ? mockKeyFromUrl() : null;
+  // ?retry=last — reopen the exercise with only the last attempt mistakes.
+  const retryLast =
+    !mockKey &&
+    new URLSearchParams(window.location.search).get("retry") === "last";
 
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -31,6 +36,9 @@ export default function App() {
   const [hints, setHints] = useState<{ taskId: number; why: string }[] | null>(
     null,
   );
+  // Retry mode: chip text under the title, or the "nothing to practice" state.
+  const [retryNote, setRetryNote] = useState<string | null>(null);
+  const [retryEmpty, setRetryEmpty] = useState(false);
 
   // Load exercise JSON from Supabase (anon read of the exercises table),
   // or straight from the bundled mocks in dev ?mock= mode.
@@ -49,9 +57,37 @@ export default function App() {
       return;
     }
     fetchExercise(exerciseId)
-      .then(setExercise)
+      .then(async (ex) => {
+        if (!retryLast) return setExercise(ex);
+        // Retry mode: filter to the last attempt mistakes. Any failure
+        // (no history, network) degrades to the full exercise — the
+        // student can always solve it as usual.
+        let list: { taskId: string }[] | null = null;
+        try {
+          list = await fetchLastMistakes(exerciseId, tg?.initData ?? "");
+        } catch {
+          list = null;
+        }
+        if (!list) return setExercise(ex);
+        if (!list.length) {
+          setRetryEmpty(true);
+          return;
+        }
+        const filtered = filterExerciseToMistakes(
+          ex,
+          new Set(list.map((m) => m.taskId)),
+        );
+        if (!filtered) {
+          setRetryEmpty(true);
+          return;
+        }
+        setRetryNote(
+          `Practicing ${list.length} mistake${list.length > 1 ? "s" : ""} from your last attempt`,
+        );
+        setExercise(filtered);
+      })
       .catch((e) => setLoadError((e as Error).message));
-  }, [exerciseId, mockKey]);
+  }, [exerciseId, mockKey, retryLast]);
 
   // Stable identity for answer updates passed into task components.
   const setAnswer = useCallback(
@@ -134,6 +170,19 @@ export default function App() {
       </div>
     );
 
+  // Opened ?retry=last but the last attempt had no (remaining) mistakes.
+  if (retryEmpty)
+    return (
+      <div className="app">
+        <p className="state">
+          All answers were correct on your last attempt — nothing to practice.
+        </p>
+        <a className="state state--link" href={`?exercise=${exerciseId}`}>
+          Open the full exercise
+        </a>
+      </div>
+    );
+
   return (
     <div className="app">
       {mockKey && (
@@ -153,6 +202,7 @@ export default function App() {
       <header className="app__header">
         <h1 className="app__title">{exercise.title}</h1>
         <p className="app__instruction">{exercise.instruction}</p>
+        {retryNote && <p className="app__retry-note">🎯 {retryNote}</p>}
       </header>
 
       <main className="app__body">{view}</main>
@@ -163,6 +213,14 @@ export default function App() {
           notified={notified}
           notifyError={notifyError}
           hints={hints}
+          onRetry={
+            mockKey
+              ? undefined
+              : () =>
+                  window.location.assign(
+                    `?exercise=${exerciseId}&retry=last`,
+                  )
+          }
         />
       )}
 

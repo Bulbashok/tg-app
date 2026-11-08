@@ -45,3 +45,24 @@ export async function submitResult(payload: {
     return {};
   }
 }
+
+/**
+ * Retry mode: task ids of the student's latest attempt mistakes.
+ * null  -> no previous attempt (or backend too old) — open the full exercise.
+ * []    -> the last attempt was perfect — nothing to practice.
+ * The backend HMAC-verifies initData, so a student only ever reads their own.
+ */
+export async function fetchLastMistakes(
+  exerciseId: string,
+  initData: string,
+): Promise<{ taskId: string }[] | null> {
+  const res = await fetch(
+    `${BACKEND_URL}/api/last-mistakes?exercise=${encodeURIComponent(exerciseId)}`,
+    { headers: { "x-tg-init-data": initData } },
+  );
+  if (!res.ok) throw new Error(`Last-mistakes fetch failed (${res.status})`);
+  const data = (await res.json()) as {
+    errors?: { taskId: string }[] | null;
+  };
+  return data.errors ?? null;
+}

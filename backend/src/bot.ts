@@ -550,10 +550,19 @@ async function buildMyExercises(
   for (const it of [...pending, ...done]) {
     if (buttons >= 15) break;
     const score = latest.get(it.ex.id);
-    kb.webApp(
-      (score ? `🔁 ${it.ex.title} · ${score}` : `▶️ ${it.ex.title}`).slice(0, 60),
-      webAppLink(it.ex.id),
-    ).row();
+    // Imperfect attempts open the retry view (only the failed items);
+    // perfect or unattempted ones open the full exercise.
+    const [c, t] = (score ?? "").split("/").map(Number);
+    const imperfect = Number.isFinite(c) && Number.isFinite(t) && c < t;
+    const link = imperfect
+      ? `${env.webAppUrl}/?exercise=${it.ex.id}&retry=last`
+      : webAppLink(it.ex.id);
+    const label = imperfect
+      ? `🎯 ${it.ex.title} · ${score}`
+      : score
+        ? `🔁 ${it.ex.title} · ${score}`
+        : `▶️ ${it.ex.title}`;
+    kb.webApp(label.slice(0, 60), link).row();
     buttons++;
   }
   kb.text("🔄 Refresh", "myex");
