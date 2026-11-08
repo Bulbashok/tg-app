@@ -25,7 +25,10 @@ if (proxyUrl) {
   clientOpts = { ...clientOpts, fetch: proxiedFetch as never };
 }
 
-const ai = new OpenAI(clientOpts);
+// maxRetries: the SDK retries 429/5xx with exponential backoff automatically.
+// Groq's shared free-tier capacity can 503 briefly ("over capacity"), so
+// ride out short spikes instead of surfacing the error to the teacher.
+const ai = new OpenAI({ ...clientOpts, maxRetries: 4 });
 
 // Predefined system prompt: forces a machine-checkable JSON contract.
 const SYSTEM_PROMPT = `You are an exercise generator for an English-language textbook.

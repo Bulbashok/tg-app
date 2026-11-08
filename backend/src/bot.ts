@@ -101,6 +101,13 @@ function describeParseError(err: unknown): string {
     );
   }
   const msg = err instanceof Error ? err.message : String(err);
+  // Groq shared-capacity overload survived all SDK retries.
+  if (/over capacity|503/i.test(msg))
+    return (
+      "Серверы Groq сейчас перегружены (модель общая у многих) — " +
+      "попробуй отправить фото ещё раз через минуту.\n" +
+      "Статус: https://groqstatus.com"
+    );
   return msg.slice(0, 900);
 }
 
