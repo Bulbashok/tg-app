@@ -1,10 +1,12 @@
 // Mini App root: Telegram init -> resolve exercise id -> fetch from Supabase
-// -> render the dynamic task view -> "Проверить" -> score, save, notify, feedback.
+// -> render the dynamic task view -> "Check answers" -> score, save, notify, feedback.
+// Dev-only ?mock=<task_type> mode renders bundled exercises without any backend.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useExerciseId, useTelegramInit } from "./hooks/useTelegram";
 import { fetchExercise, submitResult } from "./lib/api";
 import { tg, haptic } from "./lib/telegram";
 import { scoreExercise, isComplete, type Answers } from "./lib/scoring";
+import { MOCK_EXERCISES, mockKeyFromUrl } from "./dev/mocks";
 import type { Exercise, SubmissionResult } from "./types";
 import GapFill from "./components/GapFill";
 import WordForm from "./components/WordForm";
@@ -15,6 +17,8 @@ import ResultBanner from "./components/ResultBanner";
 export default function App() {
   useTelegramInit();
   const exerciseId = useExerciseId();
+  // Mock mode works only in `npm run dev` builds; tree-shaken from prod.
+  const mockKey = import.meta.env.DEV ? mockKeyFromUrl() : null;
 
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -24,8 +28,16 @@ export default function App() {
   const [notified, setNotified] = useState(false);
   const [notifyError, setNotifyError] = useState(false);
 
-  // Load exercise JSON from Supabase (anon read of the exercises table).
+  // Load exercise JSON from Supabase (anon read of the exercises table),
+  // or straight from the bundled mocks in dev ?mock= mode.
   useEffect(() => {
+    if (mockKey) {
+      setExercise(
+        MOCK_EXERCISES.find((e) => e.task_type === mockKey) ??
+          MOCK_EXERCISES[0],
+      );
+      return;
+    }
     if (!exerciseId) {
       setLoadError(
         "Exercise not found. Open the exercise from the link in the bot message.",
@@ -35,7 +47,7 @@ export default function App() {
     fetchExercise(exerciseId)
       .then(setExercise)
       .catch((e) => setLoadError((e as Error).message));
-  }, [exerciseId]);
+  }, [exerciseId, mockKey]);
 
   // Stable identity for answer updates passed into task components.
   const setAnswer = useCallback(
@@ -53,6 +65,11 @@ export default function App() {
     haptic(scored.correct === scored.total ? "success" : "error");
 
     // One backend call: verify initData -> save submission -> alert teacher.
+    // Skipped entirely in mock mode — UI-only iteration, nothing is sent.
+    if (mockKey) {
+      setNotified(true);
+      return;
+    }
     setSubmitting(true);
     try {
       await submitResult({
@@ -99,6 +116,20 @@ export default function App() {
 
   return (
     <div className="app">
+      {mockKey && (
+        <nav className="mock-nav">
+          <b>mock UI</b>
+          {MOCK_EXERCISES.map((e) => (
+            <a
+              key={e.id}
+              href={`?mock=${e.task_type}`}
+              className={e.task_type === mockKey ? "is-active" : ""}
+            >
+              {e.task_type}
+            </a>
+          ))}
+        </nav>
+      )}
       <header className="app__header">
         <h1 className="app__title">{exercise.title}</h1>
         <p className="app__instruction">{exercise.instruction}</p>

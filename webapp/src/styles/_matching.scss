@@ -94,15 +94,20 @@
     color: $muted;
   }
 
-  &__dot {
+  // "↔ G" / "↔ 3" partner tag — text redundancy for the color tint,
+  // so pairs stay identifiable for color-blind students.
+  &__tag {
     margin-left: auto;
-    width: 10px;
-    height: 10px;
     flex: 0 0 auto;
-    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    border: 1.5px solid currentColor;
+    border-radius: $radius-sm;
   }
 
-  // ✓ / ✕ shown instead of the dot after "Проверить ответы" — flat ink,
+  // ✓ / ✕ shown instead of the tag after "Check answers" — flat ink,
   // no badge fill, readable in both themes.
   &__mark {
     margin-left: auto;
@@ -121,13 +126,70 @@
   }
 }
 
-// Colored pairing accents while solving (border + dot share the pair color).
+// Colored pairing accents while solving: full-tint frame + soft background
+// of the same pair color, so every formed pair reads as one visual unit
+// across both columns (flat color-mix tint, no glow).
 @each $key, $color in $pair-colors {
-  .pair-#{$key} {
+  .matching__item.pair-#{$key} {
     border-color: $color !important;
     border-bottom-color: $color !important;
+    background: color-mix(in srgb, #{$color} 14%, #{$card}) !important;
   }
-  .matching__dot.pair-#{$key} {
-    background: $color;
+  .matching__tag.pair-#{$key} {
+    color: $color;
+  }
+}
+
+// Micro horizontal scroll under the columns after reveal: the student's own
+// pairs as swipeable chips with ✓/✕.
+.matching__strip {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 10px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+
+  &-item {
+    scroll-snap-align: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    max-width: 260px;
+    padding: 8px 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid $hairline;
+    border-bottom: 3px solid $keycap;
+    border-radius: $radius-md;
+
+    &.is-ok {
+      color: $green;
+      background: $green-bg;
+      border-color: $green-border;
+      border-bottom-color: $green-border;
+    }
+
+    &.is-bad {
+      color: $red;
+      background: $red-bg;
+      border-color: $red-border;
+      border-bottom-color: $red-border;
+    }
+
+    .matching__num {
+      background: transparent;
+      border-color: currentColor;
+      color: inherit;
+    }
+    .matching__mark {
+      margin-left: 4px;
+    }
   }
 }

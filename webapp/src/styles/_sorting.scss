@@ -49,13 +49,18 @@
     color: $muted;
   }
 
-  // The tray holding un-sorted words.
+  // The tray holding un-sorted words. Fixed-cell grid with an explicit
+  // height; sibling transforms are disabled for pool cards in Sorting.tsx,
+  // so the layout is frozen mid-drag and extra words just scroll.
   &__pool {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    grid-auto-rows: minmax(44px, auto);
+    align-content: start; // keep rows content-sized; empty space stays below
     gap: 8px;
-    min-height: 56px;
+    height: 178px; // 3 rows + padding — fixed so nothing re-measures mid-drag
     padding: 14px;
+    overflow-y: auto;
     background: $sand;
     border: 1px solid $hairline;
     border-radius: $radius-lg;
@@ -70,6 +75,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 2px;
     padding: 8px 12px;
     font-size: 14px;

@@ -33,14 +33,14 @@ $red-border: var(--err-border, #f0b5b1);
 $neutral-soft: $sand;
 $line: $hairline;
 
-// Pair accents for the matching task: calm earth tones (forest, ochre,
-// brick, olive, clay) — re-tuned per theme via CSS custom properties.
+// Pair accents for the matching task: Okabe–Ito colorblind-safe set
+// (blue, vermillion, green, purple, amber) — re-tuned per theme below.
 $pair-colors: (
-  "a": var(--pair-a, #2d5a27),
-  "b": var(--pair-b, #b08300),
-  "c": var(--pair-c, #a2493b),
-  "d": var(--pair-d, #5f7a3d),
-  "e": var(--pair-e, #7d5a50),
+  "a": var(--pair-a, #0072b2),
+  "b": var(--pair-b, #d55e00),
+  "c": var(--pair-c, #009e73),
+  "d": var(--pair-d, #a9538a),
+  "e": var(--pair-e, #b07800),
 );
 
 $font-stack: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",

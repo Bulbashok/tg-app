@@ -1,6 +1,7 @@
 // 'matching' view: two parallel columns (English / Russian).
 // Tap an English item, then a Russian item to connect them — both columns
-// highlight with the same accent color per pair. Re-tap to unpair.
+// highlight with the same accent color AND a "↔ label" tag (text redundancy
+// so pairs are identifiable without color vision). Re-tap to unpair.
 // After submit, pairs are colored green (correct) / red (wrong).
 import { useMemo, useState } from "react";
 import type { MatchingContent } from "../types";
@@ -31,6 +32,19 @@ export default function Matching({
 
   // Russian column order is shuffled once per mount.
   const russianItems = useMemo(() => shuffle(content.pairs), [content.pairs]);
+
+  // Letter label per russian id — for the "↔ G" tags on the English side.
+  const letterById = useMemo(() => {
+    const m: Record<string, string> = {};
+    russianItems.forEach((p, idx) => (m[String(p.id)] = letterFor(idx)));
+    return m;
+  }, [russianItems]);
+
+  // Correct russian text by id — for the recap strip after reveal.
+  const ruById = useMemo(
+    () => Object.fromEntries(content.pairs.map((p) => [String(p.id), p.russian])),
+    [content.pairs],
+  );
 
   // Which pair-id uses which accent color (stable per english id).
   const colorFor = (pairId: number) => PALETTE[pairId % PALETTE.length];
@@ -89,7 +103,11 @@ export default function Matching({
                   {ok ? "✓" : "✕"}
                 </span>
               ) : paired ? (
-                <span className={`matching__dot pair-${colorFor(p.id)}`} />
+                <span
+                  className={`matching__tag pair-${colorFor(p.id)}`}
+                >
+                  ↔ {letterById[answers[`en-${p.id}`]] ?? "?"}
+                </span>
               ) : null}
             </button>
           );
@@ -137,12 +155,37 @@ export default function Matching({
               ) : revealed && missed ? (
                 <span className="matching__mark is-ok">✓</span>
               ) : ownerId != null ? (
-                <span className={`matching__dot pair-${colorFor(ownerId)}`} />
+                <span className={`matching__tag pair-${colorFor(ownerId)}`}>
+                  ↔ {ownerId}
+                </span>
               ) : null}
             </button>
           );
         })}
       </div>
+
+      {/* Micro horizontal scroll: swipeable recap of the student's own pairs
+          with ✓/✕, shown after checking answers. */}
+      {revealed && (
+        <div className="matching__strip">
+          {content.pairs.map((p) => {
+            const ok = isPairCorrect(p.id);
+            const chosen = answers[`en-${p.id}`];
+            return (
+              <span
+                key={`strip-${p.id}`}
+                className={`matching__strip-item ${ok ? "is-ok" : "is-bad"}`}
+              >
+                <span className="matching__num">{p.id}</span>
+                {p.english} → {chosen ? ruById[chosen] : "—"}
+                <span className={`matching__mark ${ok ? "is-ok" : "is-bad"}`}>
+                  {ok ? "✓" : "✕"}
+                </span>
+              </span>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

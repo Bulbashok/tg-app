@@ -1,12 +1,12 @@
 // Data-access helpers: read the exercise from Supabase, submit results to
 // the backend (which verifies initData, writes DB rows and alerts the teacher).
-import { supabase } from "./supabase";
+import { getSupabase } from "./supabase";
 import type { Exercise } from "../types";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string;
 
 export async function fetchExercise(id: string): Promise<Exercise> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("exercises")
     .select("*")
     .eq("id", id)

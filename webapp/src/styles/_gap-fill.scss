@@ -24,6 +24,32 @@
     }
   }
 
+  &__slot {
+    position: relative; // anchors the inline word picker
+    display: inline-block;
+  }
+
+  // Word picker popping up right above the tapped gap — chips reuse the
+  // .word-bank__chip look. Flat card, keycap bottom, no shadow.
+  &__picker {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    width: max-content;
+    max-width: min(300px, 80vw);
+    padding: 10px;
+    background: $card;
+    border: 1px solid $hairline;
+    border-bottom: 3px solid $keycap;
+    border-radius: $radius-md;
+  }
+
   &__input {
     display: inline-block;
     width: 110px;
@@ -106,6 +132,12 @@
 
     &:disabled {
       opacity: 0.5;
+    }
+
+    // Already placed in another gap — dimmed but still tappable (swap).
+    &.is-used {
+      opacity: 0.45;
+      text-decoration: line-through;
     }
   }
 

@@ -58,6 +58,16 @@ export default function Sorting({
 
     setLists((prev) => {
       const next: Lists = { ...prev };
+      if (source.droppableId === destination.droppableId) {
+        // Reorder within one list: remove from source index, then insert
+        // at destination index in the SAME array. Splicing into the original
+        // array (which still holds the item) would duplicate it.
+        const list = [...prev[source.droppableId]];
+        list.splice(source.index, 1);
+        list.splice(destination.index, 0, draggableId);
+        next[source.droppableId] = list;
+        return next;
+      }
       next[source.droppableId] = prev[source.droppableId].filter(
         (id) => id !== draggableId,
       );
@@ -88,25 +98,40 @@ export default function Sorting({
         key={wordId}
         isDragDisabled={revealed}
       >
-        {(provided) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-            className={[
-              "sorting__card",
-              isWrong ? "is-wrong" : "",
-              isRight ? "is-correct" : "",
-            ].join(" ")}
-          >
-            {word.text}
-            {isWrong && (
-              <small className="sorting__fix">
-                → {catName(word.categoryId)}
-              </small>
-            )}
-          </div>
-        )}
+        {(provided, snapshot) => {
+          // Pool cards stay put during drags: dnd simulates the moving gap by
+          // transforming siblings, which in a multi-row grid pushes cards past
+          // the container border. Pool order is meaningless for scoring, so we
+          // drop those transforms there; the dragged clone keeps its own style.
+          const frozen = droppableId === POOL && !snapshot.isDragging;
+          const style = frozen
+            ? {
+                ...provided.draggableProps.style,
+                transform: "none",
+                transition: "none",
+              }
+            : provided.draggableProps.style;
+          return (
+            <div
+              ref={provided.innerRef}
+              {...provided.draggableProps}
+              {...provided.dragHandleProps}
+              style={style}
+              className={[
+                "sorting__card",
+                isWrong ? "is-wrong" : "",
+                isRight ? "is-correct" : "",
+              ].join(" ")}
+            >
+              {word.text}
+              {isWrong && (
+                <small className="sorting__fix">
+                  → {catName(word.categoryId)}
+                </small>
+              )}
+            </div>
+          );
+        }}
       </Draggable>
     );
   };
@@ -143,7 +168,8 @@ export default function Sorting({
           ))}
         </div>
 
-        {/* Word pool */}
+        {/* Word pool: grid of equal cells; sibling transforms are neutralised
+            in renderCard, so the tray layout is frozen mid-drag. */}
         <Droppable droppableId={POOL} isDropDisabled={revealed}>
           {(provided, snapshot) => (
             <div

@@ -24,11 +24,13 @@
   --err-bg: #fceceb;
   --err-border: #f0b5b1;
 
-  --pair-a: #2d5a27;
-  --pair-b: #b08300;
-  --pair-c: #a2493b;
-  --pair-d: #5f7a3d;
-  --pair-e: #7d5a50;
+  // Pair accents: Okabe–Ito colorblind-safe palette (clearly distinct
+  // under protanopia/deuteranopia, unlike the former earth tones).
+  --pair-a: #0072b2;
+  --pair-b: #d55e00;
+  --pair-c: #009e73;
+  --pair-d: #a9538a;
+  --pair-e: #b07800;
 
   // Nudge native Telegram chrome (buttons it may render) to our palette.
   --tg-theme-button-color: #2d5a27;
@@ -55,11 +57,11 @@
   --err-bg: #33211f;
   --err-border: #a2665f;
 
-  --pair-a: #7fb37a;
-  --pair-b: #d6b24a;
-  --pair-c: #d08778;
-  --pair-d: #a3bd7e;
-  --pair-e: #bda18c;
+  --pair-a: #56b4e9;
+  --pair-b: #ef8a62;
+  --pair-c: #3cbfa0;
+  --pair-d: #dd9fc3;
+  --pair-e: #eec257;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -83,11 +85,11 @@
     --err-bg: #33211f;
     --err-border: #a2665f;
 
-    --pair-a: #7fb37a;
-    --pair-b: #d6b24a;
-    --pair-c: #d08778;
-    --pair-d: #a3bd7e;
-    --pair-e: #bda18c;
+    --pair-a: #56b4e9;
+    --pair-b: #ef8a62;
+    --pair-c: #3cbfa0;
+    --pair-d: #dd9fc3;
+    --pair-e: #eec257;
   }
 }
 
@@ -189,5 +191,41 @@ body {
     background: $red-bg;
     border: 1px solid $red-border;
     border-radius: $radius-md;
+  }
+}
+
+/* Dev-only mock switcher bar (npm run dev + ?mock=...) */
+.mock-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  border: 1px dashed var(--underline);
+  border-radius: $radius-md;
+
+  b {
+    color: $muted;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  a {
+    padding: 3px 10px;
+    border: 1px solid transparent;
+    border-radius: $radius-sm;
+    color: $muted;
+    text-decoration: none;
+
+    &:hover {
+      color: $text;
+    }
+    &.is-active {
+      color: $accent;
+      border-color: $accent;
+      background: $sand;
+      font-weight: 600;
+    }
   }
 }
