@@ -10,9 +10,18 @@ import type { ExerciseRow } from "./types.js";
 
 export const bot = new Bot(env.telegramBotToken);
 
-/** Deep-link style Mini App URL carrying the exercise id. */
+/** Mini App URL for inline web_app buttons (must be the app's own domain). */
 function webAppLink(exerciseId: string): string {
   return `${env.webAppUrl}/?exercise=${exerciseId}`;
+}
+
+/** Forwardable/shareable link. If TME_APP_URL is set (BotFather /newapp),
+ * a t.me deep link is used: tapping it opens the Mini App WITH initData,
+ * so student scores save even from plain text in any chat. */
+function shareLink(exerciseId: string): string {
+  return env.tmeAppUrl
+    ? `${env.tmeAppUrl}?startapp=ex_${exerciseId}`
+    : webAppLink(exerciseId);
 }
 
 // --- Commands ---------------------------------------------------------------
@@ -115,10 +124,22 @@ bot.callbackQuery(/^(confirm|cancel):([0-9a-f-]{8})$/, async (ctx: Context) => {
 
   // Return the Telegram Web App link format the user asked for.
   const link = webAppLink(data.id);
-  const shareKb = new InlineKeyboard().webApp("🎓 Open Exercise", link);
+  const deep = shareLink(data.id);
+  const kb = new InlineKeyboard().webApp("🎓 Open Exercise", link);
+  if (env.tmeAppUrl) {
+    // Native Telegram share sheet: pick a student, link is sent as text.
+    kb.row().url(
+      "📤 Share with students",
+      `https://t.me/share/url?url=${encodeURIComponent(deep)}&text=${encodeURIComponent(data.title)}`,
+    );
+  }
   await ctx.editMessageText(
-    `✅ Published!\n\n📘 ${data.title}\n\n👉 Forward this message to a student —\nthe button opens the exercise inside Telegram.`,
-    { reply_markup: shareKb },
+    `✅ Published!\n\n📘 ${data.title}\n\n${
+      env.tmeAppUrl
+        ? `🔗 ${deep}\n\n👉 Press "Share" or copy the link above —\nit opens the exercise for any student.`
+        : `👉 Press the button to open the exercise.\n\nℹ️ Telegram strips inline buttons when a\nmessage is forwarded. To share with students,\nregister the Mini App in @BotFather (/newapp)\nand set TME_APP_URL — then links work everywhere.`
+    }`,
+    { reply_markup: kb },
   );
 });
 
@@ -132,8 +153,8 @@ bot.command("list", async (ctx) => {
     .limit(10);
   if (!data?.length) return ctx.reply("No exercises yet.");
 
-  // One button per exercise: the whole message can be forwarded to a class
-  // chat, and students open any exercise straight from the forwarded copy.
+  // One button per exercise (opens for the teacher; buttons don't survive
+  // forwarding, which is why publishing uses shareable t.me links instead).
   const kb = new InlineKeyboard();
   for (const [i, e] of data.entries()) {
     const label = `${i + 1}. ${e.title}`.slice(0, 64);

@@ -30,6 +30,10 @@ export const env = {
   imageBucket: process.env.SUPABASE_IMAGE_BUCKET ?? "textbook-images",
   // Public URL of the deployed Vite app (https required by Telegram).
   webAppUrl: required("WEB_APP_URL").replace(/\/+$/, ""),
+  // Optional: short link from BotFather /newapp, e.g.
+  // https://t.me/eng_task_master_bot/english — enables forwardable/shareable
+  // deep links that open WITH initData (plain webapp URLs don't survive that).
+  tmeAppUrl: (process.env.TME_APP_URL ?? "").replace(/\/+$/, ""),
   port: Number(process.env.PORT ?? 3000), // Render injects PORT
 };
 
