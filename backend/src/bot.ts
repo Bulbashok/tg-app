@@ -117,7 +117,7 @@ bot.callbackQuery(/^(confirm|cancel):([0-9a-f-]{8})$/, async (ctx: Context) => {
   const link = webAppLink(data.id);
   const shareKb = new InlineKeyboard().webApp("🎓 Open Exercise", link);
   await ctx.editMessageText(
-    `✅ Published!\n\n📘 ${data.title}\n🔗 ${link}\n\nTap below to test it inside Telegram.`,
+    `✅ Published!\n\n📘 ${data.title}\n\n👉 Forward this message to a student —\nthe button opens the exercise inside Telegram.`,
     { reply_markup: shareKb },
   );
 });
@@ -130,10 +130,19 @@ bot.command("list", async (ctx) => {
     .select("id,title,task_type,created_at")
     .order("created_at", { ascending: false })
     .limit(10);
-  const text = (data ?? [])
-    .map((e) => `• ${e.title} (${e.task_type})\n  ${webAppLink(e.id)}`)
-    .join("\n\n");
-  await ctx.reply(text || "No exercises yet.");
+  if (!data?.length) return ctx.reply("No exercises yet.");
+
+  // One button per exercise: the whole message can be forwarded to a class
+  // chat, and students open any exercise straight from the forwarded copy.
+  const kb = new InlineKeyboard();
+  for (const [i, e] of data.entries()) {
+    const label = `${i + 1}. ${e.title}`.slice(0, 64);
+    kb.webApp(label, webAppLink(e.id)).row();
+  }
+  await ctx.reply(
+    "📚 Latest exercises — tap to open, or forward this message to students:",
+    { reply_markup: kb },
+  );
 });
 
 // --- Notify the teacher about a student submission (from the webhook) --------
