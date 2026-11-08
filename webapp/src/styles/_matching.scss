@@ -1,6 +1,7 @@
 @use "variables" as *;
 
 // matching: two parallel columns, tap-to-pair -------------------------------
+// Flat editorial: hairline frames, paper tints for feedback — no glows.
 .matching {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -14,12 +15,12 @@
 
   &__head {
     margin: 0;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     text-align: center;
     color: $muted;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
   }
 
   &__item {
@@ -28,65 +29,103 @@
     align-items: center;
     gap: 6px;
     min-height: 52px;
-    padding: 8px 10px;
+    padding: 10px 12px;
     font-size: 14px;
     font-family: inherit;
+    line-height: 1.45;
     text-align: left;
     color: $text;
     background: $card;
-    border: 2px solid transparent;
+    border: 1px solid $hairline;
+    border-bottom: 3px solid $keycap; // keycap tactility, zero blur
     border-radius: $radius-md;
-    box-shadow: $shadow;
     cursor: pointer;
     transition:
-      transform 0.08s ease,
+      background 0.12s ease,
       border-color 0.12s ease;
 
     &:active {
-      transform: scale(0.98);
+      background: $sand;
     }
 
     &.is-selected {
       border-color: $accent;
+      border-bottom-color: $accent;
+      background: $sand;
     }
 
+    // Reveal states — flat paper tints with matching crisp frames.
     &.is-correct {
-      border-color: $green;
+      border-color: $green-border;
+      border-bottom-color: $green-border;
       background: $green-bg;
+      color: $green;
     }
 
     &.is-wrong {
-      border-color: $red;
+      border-color: $red-border;
+      border-bottom-color: $red-border;
       background: $red-bg;
+      color: $red;
+    }
+
+    // Correct partner the student missed: quiet dashed green frame.
+    &.is-answer {
+      border-style: dashed;
+      border-color: $green-border;
+      border-bottom-color: $green-border;
+      background: $green-bg;
+      color: $green;
     }
   }
 
+  // Position labels: 1..n (English) / A..Z (Russian).
   &__num {
     display: inline-grid;
     place-items: center;
     width: 20px;
     height: 20px;
     flex: 0 0 auto;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    border-radius: 50%;
-    background: $neutral-soft;
-    color: $text;
+    border-radius: $radius-sm;
+    background: $sand;
+    border: 1px solid $hairline;
+    color: $muted;
   }
 
   &__dot {
     margin-left: auto;
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     flex: 0 0 auto;
     border-radius: 50%;
   }
+
+  // ✓ / ✕ shown instead of the dot after "Проверить ответы" — flat ink,
+  // no badge fill, readable in both themes.
+  &__mark {
+    margin-left: auto;
+    flex: 0 0 auto;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1;
+
+    &.is-ok {
+      color: $green;
+    }
+
+    &.is-bad {
+      color: $red;
+    }
+  }
 }
 
-// Colored pairing accents (border + dot share the pair color).
+// Colored pairing accents while solving (border + dot share the pair color).
 @each $key, $color in $pair-colors {
   .pair-#{$key} {
     border-color: $color !important;
+    border-bottom-color: $color !important;
   }
   .matching__dot.pair-#{$key} {
     background: $color;

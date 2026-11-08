@@ -1,6 +1,7 @@
 @use "variables" as *;
 
 // sorting: category drop-boxes (top) + draggable word cards (bottom) --------
+// Flat workbook look: hairline dashed zones, keycap word tiles.
 .sorting {
   display: flex;
   flex-direction: column;
@@ -14,9 +15,9 @@
 
   &__box {
     min-height: 120px;
-    padding: 10px;
+    padding: 12px;
     background: $card;
-    border: 2px dashed $line;
+    border: 1px dashed $underline;
     border-radius: $radius-lg;
     display: flex;
     flex-direction: column;
@@ -27,22 +28,25 @@
 
     &.is-over {
       border-color: $accent;
-      background: rgba(51, 144, 236, 0.06);
+      border-style: solid;
+      background: $sand;
     }
   }
 
   &__box-title {
     margin: 0 0 4px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     text-align: center;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: $muted;
   }
 
   &__empty {
     margin: auto;
-    font-size: 12px;
+    font-size: 13px;
     color: $muted;
-    opacity: 0.7;
   }
 
   // The tray holding un-sorted words.
@@ -51,12 +55,14 @@
     flex-wrap: wrap;
     gap: 8px;
     min-height: 56px;
-    padding: 12px;
-    background: $neutral-soft;
+    padding: 14px;
+    background: $sand;
+    border: 1px solid $hairline;
     border-radius: $radius-lg;
 
     &.is-over {
-      background: rgba(51, 144, 236, 0.08);
+      border-color: $accent;
+      background: $card;
     }
   }
 
@@ -69,9 +75,9 @@
     font-size: 14px;
     font-weight: 600;
     background: $card;
-    border: 2px solid transparent;
+    border: 1px solid $hairline;
+    border-bottom: 3px solid $keycap; // physical card edge
     border-radius: $radius-md;
-    box-shadow: $shadow;
     cursor: grab;
     user-select: none;
 
@@ -80,19 +86,23 @@
     }
 
     &.is-correct {
-      border-color: $green;
+      border-color: $green-border;
+      border-bottom-color: $green-border;
       background: $green-bg;
+      color: $green;
     }
 
     &.is-wrong {
-      border-color: $red;
+      border-color: $red-border;
+      border-bottom-color: $red-border;
       background: $red-bg;
+      color: $red;
     }
   }
 
   &__fix {
-    font-weight: 400;
-    font-size: 11px;
+    font-weight: 500;
+    font-size: 12px;
     color: $green;
   }
 }

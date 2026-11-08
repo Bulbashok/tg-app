@@ -1,14 +1,15 @@
 @use "variables" as *;
 
 // word-form: numbered sentences with free-typed inputs + hint chips --------
+// One calm paper card, hairline frame, pencil-rule inputs.
 .word-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   background: $card;
+  border: 1px solid $hairline;
   border-radius: $radius-lg;
-  padding: 16px 16px 14px;
-  box-shadow: $shadow;
+  padding: 20px 18px 18px;
 
   &__line {
     margin: 0;
@@ -31,32 +32,34 @@
     color: $text;
     background: transparent;
     border: none;
-    border-bottom: 2px solid $accent;
+    border-bottom: 2px solid $underline;
     border-radius: $radius-sm $radius-sm 0 0;
     outline: none;
 
     &:focus {
-      background: rgba(51, 144, 236, 0.08);
+      border-bottom-color: $accent;
+      background: $sand;
     }
 
     // Post-submit feedback (same language as gap-fill inputs).
     &.is-correct {
-      border-bottom-color: $green;
+      border-bottom-color: $green-border;
       background: $green-bg;
       color: $green;
     }
 
     &.is-wrong {
-      border-bottom-color: $red;
+      border-bottom-color: $red-border;
       background: $red-bg;
       color: $red;
       text-decoration: line-through;
     }
   }
 
+  // The base word to transform — quiet italic, not a blue link.
   &__hint {
     margin-left: 6px;
-    color: $accent;
+    color: $muted;
     font-style: italic;
   }
 

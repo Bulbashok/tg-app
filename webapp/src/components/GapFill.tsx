@@ -107,7 +107,7 @@ export default function GapFill({
       </div>
 
       <aside className="word-bank">
-        <h3 className="word-bank__title">🧰 Word Bank</h3>
+        <h3 className="word-bank__title">Word Bank</h3>
         <div className="word-bank__chips">
           {bank.map((w) => (
             <button
@@ -124,7 +124,7 @@ export default function GapFill({
         <p className="word-bank__hint">
           {revealed
             ? ""
-            : "Выберите пробел, затем слово в Word Bank (или печатайте вручную)"}
+            : "Select a gap, then choose a word from the Word Bank — or type it yourself."}
         </p>
       </aside>
     </div>

@@ -18,6 +18,9 @@ interface Props {
 /** 5 rotating accent colors for formed pairs. */
 const PALETTE = ["a", "b", "c", "d", "e"];
 
+/** Display letter for the Russian column (position-based, A, B, C…). */
+const letterFor = (index: number) => String.fromCharCode(65 + index);
+
 export default function Matching({
   content,
   answers,
@@ -62,6 +65,7 @@ export default function Matching({
         <h3 className="matching__head">English</h3>
         {content.pairs.map((p) => {
           const paired = !!answers[`en-${p.id}`];
+          const ok = isPairCorrect(p.id);
           return (
             <button
               type="button"
@@ -69,20 +73,24 @@ export default function Matching({
               className={[
                 "matching__item",
                 selectedEn === p.id ? "is-selected" : "",
-                paired ? `is-paired pair-${colorFor(p.id)}` : "",
-                revealed
-                  ? isPairCorrect(p.id)
-                    ? "is-correct"
-                    : "is-wrong"
-                  : "",
+                // Pair accents only while solving; after reveal the
+                // green/red states own the border instead.
+                paired && !revealed ? `is-paired pair-${colorFor(p.id)}` : "",
+                revealed ? (ok ? "is-correct" : "is-wrong") : "",
               ].join(" ")}
               onClick={() => tapEnglish(p.id)}
             >
               <span className="matching__num">{p.id}</span>
               {p.english}
-              {paired && (
+              {revealed && paired ? (
+                <span
+                  className={`matching__mark ${ok ? "is-ok" : "is-bad"}`}
+                >
+                  {ok ? "✓" : "✕"}
+                </span>
+              ) : paired ? (
                 <span className={`matching__dot pair-${colorFor(p.id)}`} />
-              )}
+              ) : null}
             </button>
           );
         })}
@@ -90,30 +98,47 @@ export default function Matching({
 
       <div className="matching__column">
         <h3 className="matching__head">Russian</h3>
-        {russianItems.map((p) => {
+        {russianItems.map((p, idx) => {
           // Is this russian item claimed by some english row?
           const ownerId = content.pairs.find(
             (q) => answers[`en-${q.id}`] === String(p.id),
           )?.id;
+          const ok = ownerId === p.id;
+          // The right partner of a wrong/missing english pick, left unclaimed:
+          // reveal it as the correct answer with a dashed green frame.
+          const missed = revealed && ownerId == null && !isPairCorrect(p.id);
           return (
             <button
               type="button"
               key={`ru-${p.id}`}
               className={[
                 "matching__item",
-                ownerId != null ? `is-paired pair-${colorFor(ownerId)}` : "",
-                revealed && ownerId != null
-                  ? ownerId === p.id
-                    ? "is-correct"
-                    : "is-wrong"
+                ownerId != null && !revealed
+                  ? `is-paired pair-${colorFor(ownerId)}`
+                  : "",
+                revealed
+                  ? ownerId != null
+                    ? ok
+                      ? "is-correct"
+                      : "is-wrong"
+                    : missed
+                      ? "is-answer"
+                      : ""
                   : "",
               ].join(" ")}
               onClick={() => tapRussian(p.id)}
             >
+              <span className="matching__num">{letterFor(idx)}</span>
               {p.russian}
-              {ownerId != null && (
+              {revealed && ownerId != null ? (
+                <span className={`matching__mark ${ok ? "is-ok" : "is-bad"}`}>
+                  {ok ? "✓" : "✕"}
+                </span>
+              ) : revealed && missed ? (
+                <span className="matching__mark is-ok">✓</span>
+              ) : ownerId != null ? (
                 <span className={`matching__dot pair-${colorFor(ownerId)}`} />
-              )}
+              ) : null}
             </button>
           );
         })}

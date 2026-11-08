@@ -27,7 +27,9 @@ export default function App() {
   // Load exercise JSON from Supabase (anon read of the exercises table).
   useEffect(() => {
     if (!exerciseId) {
-      setLoadError("Нет ссылки на упражнение (parameter ?exercise=<id>).");
+      setLoadError(
+        "Exercise not found. Open the exercise from the link in the bot message.",
+      );
       return;
     }
     fetchExercise(exerciseId)
@@ -91,7 +93,7 @@ export default function App() {
   if (!exercise)
     return (
       <div className="app">
-        <p className="state">Загрузка упражнения…</p>
+        <p className="state">Loading exercise…</p>
       </div>
     );
 
@@ -119,7 +121,7 @@ export default function App() {
           onClick={onCheck}
           disabled={!isComplete(exercise, answers) || submitting}
         >
-          {submitting ? "Отправка…" : "Проверить"}
+          {submitting ? "Saving…" : "Check answers"}
         </button>
       )}
     </div>

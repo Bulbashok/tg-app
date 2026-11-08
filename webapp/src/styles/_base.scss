@@ -1,38 +1,97 @@
 @use "variables" as *;
 
 // Theme tokens -------------------------------------------------------------
-// Light is the default; dark applies when Telegram reports a dark chat theme
-// (data-theme set by applyTelegramTheme) or, standalone, when the OS is dark.
+// Light "paper" is the default; dark applies when Telegram reports a dark
+// chat theme (data-theme set by applyTelegramTheme) or, standalone, when the
+// OS is dark. Both schemes stay warm — no cold blues anywhere.
 :root {
-  --ok-fg: #2e9e4f;
-  --ok-bg: rgba(46, 158, 79, 0.14);
-  --err-fg: #d93025;
-  --err-bg: rgba(217, 48, 37, 0.13);
-  --neutral-bg: rgba(120, 130, 145, 0.16);
-  --line-color: rgba(120, 130, 145, 0.45);
+  --bg: #faf9f6;
+  --card: #ffffff;
+  --sand: #f3f2ee;
+  --text: #1c1c1a;
+  --muted: #6e6d68;
+  --accent: #2d5a27;
+  --accent-text: #ffffff;
+  --hairline: #e5e3dc;
+  --underline: #c9c5b9;
+  --keycap: #d6d3c9;
+  --accent-edge: #1f4019; // keycap bottom of the submit button
+
+  --ok-fg: #1e4620;
+  --ok-bg: #eaf4ec;
+  --ok-border: #a3d1ac;
+  --err-fg: #691e1a;
+  --err-bg: #fceceb;
+  --err-border: #f0b5b1;
+
+  --pair-a: #2d5a27;
+  --pair-b: #b08300;
+  --pair-c: #a2493b;
+  --pair-d: #5f7a3d;
+  --pair-e: #7d5a50;
+
+  // Nudge native Telegram chrome (buttons it may render) to our palette.
+  --tg-theme-button-color: #2d5a27;
+  --tg-theme-button-text-color: #ffffff;
 }
 
 :root[data-theme="dark"] {
-  --ok-fg: #5ec97a;
-  --ok-bg: rgba(94, 201, 122, 0.16);
-  --err-fg: #ff7a6e;
-  --err-bg: rgba(255, 122, 110, 0.15);
-  --neutral-bg: rgba(255, 255, 255, 0.09);
-  --line-color: rgba(255, 255, 255, 0.22);
+  --bg: #201f1c;
+  --card: #262521;
+  --sand: #2d2c27;
+  --text: #eceae3;
+  --muted: #9b978d;
+  --accent: #7fb37a;
+  --accent-text: #16210f;
+  --hairline: #3a3833;
+  --underline: #57544b;
+  --keycap: #141310;
+  --accent-edge: #3c5c37;
+
+  --ok-fg: #a8d5ae;
+  --ok-bg: #24301f;
+  --ok-border: #4e7a54;
+  --err-fg: #f0b5b1;
+  --err-bg: #33211f;
+  --err-border: #a2665f;
+
+  --pair-a: #7fb37a;
+  --pair-b: #d6b24a;
+  --pair-c: #d08778;
+  --pair-d: #a3bd7e;
+  --pair-e: #bda18c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ok-fg: #5ec97a;
-    --ok-bg: rgba(94, 201, 122, 0.16);
-    --err-fg: #ff7a6e;
-    --err-bg: rgba(255, 122, 110, 0.15);
-    --neutral-bg: rgba(255, 255, 255, 0.09);
-    --line-color: rgba(255, 255, 255, 0.22);
+    --bg: #201f1c;
+    --card: #262521;
+    --sand: #2d2c27;
+    --text: #eceae3;
+    --muted: #9b978d;
+    --accent: #7fb37a;
+    --accent-text: #16210f;
+    --hairline: #3a3833;
+    --underline: #57544b;
+    --keycap: #141310;
+    --accent-edge: #3c5c37;
+
+    --ok-fg: #a8d5ae;
+    --ok-bg: #24301f;
+    --ok-border: #4e7a54;
+    --err-fg: #f0b5b1;
+    --err-bg: #33211f;
+    --err-border: #a2665f;
+
+    --pair-a: #7fb37a;
+    --pair-b: #d6b24a;
+    --pair-c: #d08778;
+    --pair-d: #a3bd7e;
+    --pair-e: #bda18c;
   }
 }
 
-// App shell / layout ----------------------------------------------------------
+// App shell / layout --------------------------------------------------------
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -47,17 +106,20 @@ body,
 
 body {
   font-family: $font-stack;
+  font-size: 15px;
+  line-height: 1.6; // reading comfort, workbook-like
   background: $bg;
   color: $text;
+  -webkit-font-smoothing: antialiased;
 }
 
 .app {
   max-width: 640px;
   margin: 0 auto;
-  padding: 16px 14px calc(24px + env(safe-area-inset-bottom));
+  padding: 20px 16px calc(28px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 
   &__header {
     display: flex;
@@ -67,15 +129,16 @@ body {
 
   &__title {
     margin: 0;
-    font-size: 22px;
+    font-size: 21px;
     font-weight: 700;
+    letter-spacing: -0.01em;
   }
 
   &__instruction {
     margin: 0;
     color: $muted;
     font-size: 15px;
-    line-height: 1.45;
+    line-height: 1.6;
   }
 
   &__body {
@@ -84,41 +147,47 @@ body {
     gap: 16px;
   }
 
-  // Big primary submit button pinned at the bottom of the flow.
+  // Big primary submit button pinned at the bottom of the flow. Flat forest
+  // green with a hard keycap edge — pressable, not glowing.
   &__submit {
     position: sticky;
     bottom: 12px;
     width: 100%;
-    padding: 16px;
-    font-size: 18px;
+    padding: 15px 16px;
+    font-size: 17px;
     font-weight: 700;
+    font-family: inherit;
     color: $accent-text;
     background: $accent;
     border: none;
     border-radius: $radius-md;
-    box-shadow: $shadow;
+    border-bottom: 3px solid var(--accent-edge, #1f4019);
     cursor: pointer;
-    transition:
-      transform 0.08s ease,
-      opacity 0.2s ease;
+    transition: filter 0.12s ease;
 
     &:active:not(:disabled) {
-      transform: scale(0.99);
+      filter: brightness(0.92);
     }
 
     &:disabled {
-      opacity: 0.5;
+      opacity: 0.45;
       cursor: not-allowed;
     }
   }
 }
 
+// Dark scheme handled via the --accent-edge token above.
+
 .state {
   text-align: center;
   color: $muted;
-  padding: 40px 16px;
+  padding: 44px 16px;
+  line-height: 1.6;
 
   &--error {
     color: $red;
+    background: $red-bg;
+    border: 1px solid $red-border;
+    border-radius: $radius-md;
   }
 }

@@ -1,38 +1,53 @@
 @use "variables" as *;
 
-// Result banner shown after submit ------------------------------------------
+// Result banner shown after "Проверить ответы" -------------------------------
+// Flat paper note with a hairline frame; tone carries the meaning.
 .result {
-  padding: 16px;
+  padding: 18px;
   border-radius: $radius-lg;
-  box-shadow: $shadow;
+  border: 1px solid $hairline;
+  background: $card;
   display: flex;
   flex-direction: column;
   gap: 10px;
 
   &--perfect {
     background: $green-bg;
+    border-color: $green-border;
     color: $green;
   }
 
+  // "Good" stays neutral paper with a forest left rule — no blue.
   &--good {
-    background: rgba(51, 144, 236, 0.1);
-    color: $accent;
+    border-left: 3px solid $accent;
+    color: $text;
   }
 
   &--bad {
     background: $red-bg;
+    border-color: $red-border;
     color: $red;
   }
 
-  &__score {
-    font-size: 22px;
-    font-weight: 800;
+  &__headline {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.5;
   }
 
-  &__pct {
-    font-size: 14px;
+  &__score {
+    font-size: 15px;
     font-weight: 600;
-    opacity: 0.8;
+    opacity: 0.9;
+  }
+
+  &__errors-title {
+    margin: 4px 0 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.75;
   }
 
   &__errors {
@@ -41,18 +56,18 @@
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    font-size: 13px;
-    color: $text;
+    gap: 6px;
+    font-size: 14px;
 
     li {
-      line-height: 1.4;
+      line-height: 1.55;
     }
   }
 
   &__status {
     margin: 0;
     font-size: 13px;
+    line-height: 1.5;
     opacity: 0.85;
   }
 }

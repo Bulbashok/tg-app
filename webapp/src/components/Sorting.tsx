@@ -135,7 +135,7 @@ export default function Sorting({
                   {lists[cat.id]?.map((id, i) => renderCard(id, i, cat.id))}
                   {provided.placeholder}
                   {!lists[cat.id]?.length && (
-                    <p className="sorting__empty">Перетащите сюда</p>
+                    <p className="sorting__empty">Drag words here</p>
                   )}
                 </div>
               )}

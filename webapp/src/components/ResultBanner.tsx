@@ -1,4 +1,4 @@
-// Score banner shown after "Проверить": score, per-error recap, teacher alert status.
+// Score banner shown after "Check answers": neutral recap + save status.
 import type { SubmissionResult } from "../types";
 import { tg } from "../lib/telegram";
 
@@ -11,30 +11,39 @@ interface Props {
 export default function ResultBanner({ result, notified, notifyError }: Props) {
   const pct = result.total ? result.correct / result.total : 0;
   const tone = pct === 1 ? "perfect" : pct >= 0.6 ? "good" : "bad";
+  const headline =
+    pct === 1
+      ? "All answers are correct."
+      : pct >= 0.6
+        ? "Some answers are incorrect."
+        : "Many answers are incorrect.";
 
   return (
     <div className={`result result--${tone}`}>
-      <div className="result__score">
-        🏆 {result.score}{" "}
-        <span className="result__pct">({Math.round(pct * 100)}%)</span>
-      </div>
+      <p className="result__headline">{headline}</p>
+      <p className="result__score">
+        Result: {result.correct} of {result.total}
+      </p>
       {result.errors.length > 0 && (
-        <ul className="result__errors">
-          {result.errors.map((e, i) => (
-            <li key={i}>
-              ❌ <b>#{e.taskId}</b>: вы — «{e.your}», верно — «{e.correct}»
-            </li>
-          ))}
-        </ul>
+        <>
+          <p className="result__errors-title">Mistakes</p>
+          <ul className="result__errors">
+            {result.errors.map((e, i) => (
+              <li key={i}>
+                №{e.taskId}: «{e.your}» → correct: «{e.correct}»
+              </li>
+            ))}
+          </ul>
+        </>
       )}
       <p className="result__status">
         {notified
-          ? "✅ Результат сохранён и отправлен преподавателю"
+          ? "Result saved and sent to the teacher."
           : notifyError
             ? tg?.initData
-              ? "⚠️ Не удалось отправить. Проверьте соединение и попробуйте снова."
-              : "⚠️ Откройте упражнение по кнопке из сообщения бота — иначе результат не сохранить."
-            : "⏳ Отправка результата…"}
+              ? "Could not save your result. Check the connection and try again."
+              : "Open the exercise from the button in the bot message — otherwise the result cannot be saved."
+            : "Saving result…"}
       </p>
     </div>
   );

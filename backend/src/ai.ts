@@ -45,8 +45,8 @@ Type selection guide:
 
 JSON contract (top level):
 {
-  "title":       short exercise name, e.g. "Unit 5. Phrasal verbs",
-  "instruction": the task instruction shown to the student (in the language of the textbook page),
+  "title":       short exercise name in English, e.g. "Unit 5. Phrasal verbs",
+  "instruction": one short imperative sentence in English for the student, e.g. "Match the English words with their Russian translations" (the app UI is English; never write this in Russian),
   "task_type":   "gap-fill" | "matching" | "sorting" | "word-form",
   "content":     object matching the schema for the chosen task_type
 }

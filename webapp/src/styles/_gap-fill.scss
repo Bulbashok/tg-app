@@ -1,6 +1,7 @@
 @use "variables" as *;
 
-// gap-fill: passage with inline inputs + Word Bank box ----------------------
+// gap-fill: passage card with inline inputs + "Слова для выбора" box -------
+// Flat paper look: hairline borders, zero shadows, warm accents only.
 .gap-fill {
   display: flex;
   flex-direction: column;
@@ -8,10 +9,10 @@
 
   &__passage {
     background: $card;
+    border: 1px solid $hairline;
     border-radius: $radius-lg;
-    padding: 18px 16px;
-    box-shadow: $shadow;
-    line-height: 2.1;
+    padding: 20px 18px;
+    line-height: 2.1; // room for the inline inputs
   }
 
   &__line {
@@ -34,27 +35,28 @@
     text-align: center;
     background: transparent;
     border: none;
-    border-bottom: 2px solid $accent;
+    border-bottom: 2px solid $underline; // a pencil rule in the workbook
     border-radius: $radius-sm $radius-sm 0 0;
     outline: none;
 
     &:focus {
-      background: rgba(51, 144, 236, 0.08);
+      border-bottom-color: $accent;
+      background: $sand;
     }
 
     &::placeholder {
       color: $muted;
     }
 
-    // Post-submit feedback.
+    // Post-submit feedback — flat tints, crisp borders.
     &.is-correct {
-      border-bottom-color: $green;
+      border-bottom-color: $green-border;
       background: $green-bg;
       color: $green;
     }
 
     &.is-wrong {
-      border-bottom-color: $red;
+      border-bottom-color: $red-border;
       background: $red-bg;
       color: $red;
       text-decoration: line-through;
@@ -64,14 +66,17 @@
 
 .word-bank {
   background: $card;
+  border: 1px solid $hairline;
   border-radius: $radius-lg;
-  padding: 14px 16px 12px;
-  box-shadow: $shadow;
+  padding: 16px 18px 14px;
 
   &__title {
-    margin: 0 0 10px;
-    font-size: 15px;
+    margin: 0 0 12px;
+    font-size: 13px;
     font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: $muted;
   }
 
   &__chips {
@@ -84,15 +89,19 @@
     padding: 8px 14px;
     font-size: 14px;
     font-family: inherit;
-    color: $accent;
-    background: rgba(51, 144, 236, 0.1);
-    border: 1px solid rgba(51, 144, 236, 0.35);
-    border-radius: 999px;
+    color: $text;
+    background: $sand;
+    border: 1px solid $hairline;
+    border-bottom-width: 2px; // small keycap heft for tapping
+    border-radius: 999px; // pill is fine for small tags
     cursor: pointer;
-    transition: transform 0.08s ease;
+    transition:
+      background 0.12s ease,
+      border-color 0.12s ease;
 
     &:active:not(:disabled) {
-      transform: scale(0.95);
+      background: $card;
+      border-color: $underline;
     }
 
     &:disabled {
@@ -101,8 +110,9 @@
   }
 
   &__hint {
-    margin: 10px 0 0;
-    font-size: 12px;
+    margin: 12px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
     color: $muted;
   }
 }
