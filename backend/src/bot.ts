@@ -218,5 +218,9 @@ export async function alertTeacher(payload: {
       text += `\n… and ${payload.errorsCount - lines.length} more`;
   }
 
-  await bot.api.sendMessage(Number(env.teacherId), text);
+  // Every teacher gets the report; one blocked/rate-limited DM must not
+  // swallow the notification for the others.
+  await Promise.allSettled(
+    env.teacherIds.map((id) => bot.api.sendMessage(Number(id), text)),
+  );
 }

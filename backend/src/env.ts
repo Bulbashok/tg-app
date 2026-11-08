@@ -12,8 +12,12 @@ function required(name: string): string {
 
 export const env = {
   telegramBotToken: required("TELEGRAM_BOT_TOKEN"),
-  // Only this Telegram account may drive the bot (photo upload, confirm, etc.)
-  teacherId: BigInt(required("TELEGRAM_TEACHER_ID")),
+  // Telegram accounts allowed to drive the bot (photo upload, confirm, /list).
+  // Comma-separated: TELEGRAM_TEACHER_ID=472639507,423362444
+  teacherIds: required("TELEGRAM_TEACHER_ID")
+    .split(",")
+    .map((s) => BigInt(s.trim()))
+    .filter((n) => n > 0n),
   botUsername: required("BOT_USERNAME"), // without the leading '@'
   // OpenAI-compatible vision provider. Default: Groq + qwen3.8-27b (current
   // Groq vision model; Llama vision models were removed). Any compatible API
@@ -38,5 +42,5 @@ export const env = {
 };
 
 export function isTeacher(userId: number | bigint): boolean {
-  return BigInt(userId) === env.teacherId;
+  return env.teacherIds.some((t) => t === BigInt(userId));
 }
