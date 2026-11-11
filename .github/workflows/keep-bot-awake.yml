@@ -1,25 +1,45 @@
-# Keeps the free Render instance warm — free web services sleep after ~15
-# minutes without INCOMING HTTP requests, and a sleeping instance = offline bot.
-# GitHub runs this every 5 minutes (free for public repos; schedules can drift
-# a few minutes under high load, which is acceptable here).
-name: keep-bot-awake
+# Render free tier sleeps after ~15 min without INBOUND HTTP requests, and a
+# sleeping instance means an offline bot plus a dropped grammY long-polling
+# connection (Telegram then queues updates and delivers them in a burst on the
+# ~30s cold start). This workflow is the only traffic the service gets, so it
+# has to fire inside the idle window.
+#
+# Quota: this repo is public, so GitHub-hosted Linux minutes for scheduled
+# jobs are free — 5 min stays safely inside the 15 min idle window. If the
+# repo ever becomes private (2000 min/month), switch the cron to */10.
+name: Keep bot awake
 
 on:
   schedule:
     - cron: "*/5 * * * *"
+  # Manual trigger for testing, plus a wake-up right after every deploy.
   workflow_dispatch:
+  push:
+    branches: [main]
+
+# The job makes one outbound request; it needs no repo permissions.
+permissions: {}
 
 jobs:
-  ping:
+  wake:
     runs-on: ubuntu-latest
-    timeout-minutes: 1
+    timeout-minutes: 3
     steps:
-      - name: Hit Render health endpoint
+      - name: Ping /health
         run: |
+          url="${{ vars.BACKEND_URL }}"
+          if [ -z "$url" ]; then
+            echo "::error::Repository variable BACKEND_URL is not set (Settings > Secrets and variables > Actions > Variables)"
+            exit 1
+          fi
+          # A cold instance takes up to ~60s to answer, so retry instead of
+          # reporting a false failure. -m 25 per attempt, 3 attempts.
           for i in 1 2 3; do
-            code=$(curl -s -o /dev/null -m 25 -w "%{http_code}" "${{ vars.BACKEND_URL }}/health" || true)
+            code=$(curl -s -o /dev/null -m 25 -w "%{http_code}" "$url/health" || true)
             echo "attempt $i -> HTTP $code"
-            [ "$code" = "200" ] && break
+            [ "$code" = "200" ] && exit 0
             sleep 20
           done
+          echo "::error::Backend did not answer $url/health with 200"
+          exit 1
         shell: bash
