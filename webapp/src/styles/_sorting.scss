@@ -14,22 +14,25 @@
   }
 
   &__box {
-    min-height: 120px;
+    // Reserved capacity: three placed cards (even with the post-reveal
+    // "→ category" note) fit without growing, so placing a word never
+    // pushes the pool / progress / submit button down the screen.
+    min-height: 220px;
     padding: 12px;
     background: $card;
     border: 1px dashed $underline;
-    border-radius: $radius-lg;
+    border-radius: $radius-card;
     display: flex;
     flex-direction: column;
     gap: 8px;
     transition:
-      border-color 0.12s ease,
-      background 0.12s ease;
+      border-color $dur $ease-out,
+      background $dur $ease-out;
 
     &.is-over {
       border-color: $accent;
       border-style: solid;
-      background: $sand;
+      background: $accent-soft;
     }
 
     // Tap-to-place: every box is a possible destination for the picked word.
@@ -37,36 +40,63 @@
     &.is-target {
       border-color: $accent;
       border-style: solid;
-      background: $sand;
+      background: $accent-softer;
     }
   }
 
-  // Instruction line shown only while a word is picked.
+  // Instruction slot with a RESERVED height: it is always in the flow and
+  // only swaps its text, so picking a word never shifts the board.
   &__hint {
     margin: 0;
+    height: 56px; // two lines of 13px/1.45 + padding, clamped below
     padding: 8px 12px;
+    display: flex;
+    align-items: center;
     font-size: 13px;
-    line-height: 1.5;
-    color: $accent;
+    line-height: 1.45;
+    color: $muted;
     background: $sand;
     border: 1px solid $hairline;
     border-radius: $radius-sm;
+    transition:
+      color $dur $ease-out,
+      border-color $dur $ease-out;
+
+    span {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    &[data-active="true"] {
+      color: $accent;
+      border-color: $accent;
+    }
   }
 
   &__box-title {
+    @include micro-label;
     margin: 0 0 4px;
-    font-size: 13px;
-    font-weight: 700;
     text-align: center;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: $muted;
   }
 
   &__empty {
     margin: auto;
     font-size: 13px;
     color: $muted;
+  }
+
+  // Label + tray as one unit so the caption sits close to its pool.
+  &__pool-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__pool-title {
+    @include micro-label;
+    margin: 0;
   }
 
   // The tray holding un-sorted words. Fixed-cell grid with an explicit
@@ -83,7 +113,10 @@
     overflow-y: auto;
     background: $sand;
     border: 1px solid $hairline;
-    border-radius: $radius-lg;
+    border-radius: $radius-card;
+    transition:
+      border-color $dur $ease-out,
+      background $dur $ease-out;
 
     &.is-over {
       border-color: $accent;
@@ -92,6 +125,7 @@
 
     &.is-target {
       border-color: $accent;
+      background: $accent-softer;
     }
   }
 
@@ -101,25 +135,32 @@
     align-items: center;
     justify-content: center;
     gap: 2px;
+    min-height: 44px; // same touch target as the word-bank chips
     padding: 8px 12px;
     font-size: 14px;
     font-weight: 600;
     background: $card;
     border: 1px solid $hairline;
     border-bottom: 3px solid $keycap; // physical card edge
-    border-radius: $radius-md;
+    border-radius: $radius-control;
     cursor: grab;
     user-select: none;
+    transition:
+      background $dur $ease-out,
+      border-color $dur $ease-out;
 
     &:active {
       cursor: grabbing;
     }
 
+    // Reveal wave (delay set inline per index); dragging is disabled after
+    // the check, so the animation's transform never fights dnd.
     &.is-correct {
       border-color: $green-border;
       border-bottom-color: $green-border;
       background: $green-bg;
       color: $green;
+      animation: reveal-in $dur-slow $ease-out both;
     }
 
     &.is-wrong {
@@ -127,6 +168,7 @@
       border-bottom-color: $red-border;
       background: $red-bg;
       color: $red;
+      animation: reveal-in $dur-slow $ease-out both;
     }
 
     // Picked for tap-to-place: forest frame + tint, no color-only signal
@@ -134,7 +176,7 @@
     &.is-picked {
       border-color: $accent;
       border-bottom-color: $accent;
-      background: $sand;
+      background: $accent-soft;
     }
   }
 

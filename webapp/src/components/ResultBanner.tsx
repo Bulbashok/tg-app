@@ -44,8 +44,10 @@ export default function ResultBanner({
   return (
     <div className={`result result--${tone}`}>
       <p className="result__headline">{headline}</p>
+      {/* The score as an editorial numeral — the number is the message. */}
       <p className="result__score">
-        Result: {result.correct} of {result.total}
+        <span className="result__score-num">{result.correct}</span>
+        <span className="result__score-of">of {result.total}</span>
       </p>
       {/* Share of correct answers as a length, not only as a tone color. */}
       <div

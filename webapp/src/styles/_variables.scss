@@ -4,19 +4,35 @@
 // No elevation shadows, no glows: cards separate via 1px hairline borders,
 // interactive tiles via a hard keycap bottom border.
 
-// Moderate, clean radii — nothing bubbly.
+// Moderate, clean radii — nothing bubbly. Named by role so new screens
+// pick the right one: fields 6, controls 8, cards 10, pills for chips only.
 $radius-lg: 10px;
 $radius-md: 8px;
 $radius-sm: 6px;
+$radius-card: $radius-lg;
+$radius-control: $radius-md;
+$radius-field: $radius-sm;
+
+// 4px spacing scale — every gap/padding picks a step, no odd values.
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 24px;
+$space-6: 32px;
 
 // Surfaces & ink.
 $bg: var(--bg, #faf9f6); // alabaster paper
 $card: var(--card, #ffffff);
 $sand: var(--sand, #f3f2ee); // soft stone (pools, chips, tints)
 $text: var(--text, #1c1c1a); // soft charcoal, never #000
-$muted: var(--muted, #6e6d68); // warm gray for hints
+$muted: var(--muted, #66655f); // warm gray for hints
 $accent: var(--accent, #2d5a27); // deep forest green
 $accent-text: var(--accent-text, #ffffff);
+// Brand-tinted surfaces for hover/selected/picked — flat, theme-aware.
+$accent-soft: var(--accent-soft);
+$accent-softer: var(--accent-softer);
+$disabled-fg: var(--disabled-fg);
 $hairline: var(--hairline, #e5e3dc); // 1px borders & dividers
 $underline: var(--underline, #c9c5b9); // unfocused input rules
 $keycap: var(--keycap, #d6d3c9); // hard tactile offset (no blur)
@@ -43,5 +59,24 @@ $pair-colors: (
   "e": var(--pair-e, #cc79a7),
 );
 
-$font-stack: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
-  "Helvetica Neue", Arial, sans-serif;
+$font-stack: "Inter Variable", -apple-system, BlinkMacSystemFont, "Inter",
+  "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+// Editorial display face for titles and the result numeral; system serif
+// fallbacks keep the workbook character even before the woff2 arrives.
+$font-display: "Source Serif 4", "Iowan Old Style", "Palatino Linotype",
+  "Book Antiqua", Georgia, serif;
+
+// One shared micro-label style (WORD BANK, column heads, category names).
+@mixin micro-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $muted;
+}
+
+// One shared motion language: short, decelerating, never bouncy. Every
+// hover/press/reveal uses these so surfaces feel like the same material.
+$dur: 120ms;
+$dur-slow: 180ms;
+$ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);

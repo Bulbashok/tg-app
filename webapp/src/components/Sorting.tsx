@@ -146,13 +146,17 @@ export default function Sorting({
           // the container border. Pool order is meaningless for scoring, so we
           // drop those transforms there; the dragged clone keeps its own style.
           const frozen = droppableId === POOL && !snapshot.isDragging;
-          const style = frozen
+          const base = frozen
             ? {
                 ...provided.draggableProps.style,
                 transform: "none",
                 transition: "none",
               }
             : provided.draggableProps.style;
+          // Reveal wave: cards settle in one after another (30ms steps).
+          const style = revealed
+            ? { ...base, animationDelay: `${Math.min(index, 8) * 30}ms` }
+            : base;
           return (
             <div
               ref={provided.innerRef}
@@ -183,12 +187,21 @@ export default function Sorting({
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="sorting">
-        {picked && !revealed && (
-          <p className="sorting__hint">
-            Tap a category to place “{wordById[picked]?.text}” — or tap the
-            word again to cancel.
-          </p>
-        )}
+        {/* Reserved slot: the hint swaps its text in place and never
+            inserts/removes a block — inserting it pushed the whole board
+            down on every pick, which read as the interface jumping. */}
+        <p
+          className="sorting__hint"
+          data-active={picked && !revealed ? "true" : "false"}
+        >
+          <span>
+            {revealed
+              ? ""
+              : picked
+                ? `Tap a category to place “${wordById[picked]?.text}” — or tap the word again to cancel.`
+                : "Tap a word, then tap a category — or drag it across."}
+          </span>
+        </p>
         {/* Category containers */}
         <div className="sorting__boxes">
           {content.categories.map((cat) => (
@@ -212,7 +225,7 @@ export default function Sorting({
                   {lists[cat.id]?.map((id, i) => renderCard(id, i, cat.id))}
                   {provided.placeholder}
                   {!lists[cat.id]?.length && (
-                    <p className="sorting__empty">Drag words here</p>
+                    <p className="sorting__empty">Place words here</p>
                   )}
                 </div>
               )}
@@ -222,23 +235,26 @@ export default function Sorting({
 
         {/* Word pool: grid of equal cells; sibling transforms are neutralised
             in renderCard, so the tray layout is frozen mid-drag. */}
-        <Droppable droppableId={POOL} isDropDisabled={revealed}>
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              className={[
-                "sorting__pool",
-                snapshot.isDraggingOver ? "is-over" : "",
-                picked && !revealed ? "is-target" : "",
-              ].join(" ")}
-              onClick={() => tapList(POOL)}
-            >
-              {lists[POOL]?.map((id, i) => renderCard(id, i, POOL))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
+        <div className="sorting__pool-wrap">
+          <h4 className="sorting__pool-title">Word pool</h4>
+          <Droppable droppableId={POOL} isDropDisabled={revealed}>
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={[
+                  "sorting__pool",
+                  snapshot.isDraggingOver ? "is-over" : "",
+                  picked && !revealed ? "is-target" : "",
+                ].join(" ")}
+                onClick={() => tapList(POOL)}
+              >
+                {lists[POOL]?.map((id, i) => renderCard(id, i, POOL))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </div>
       </div>
     </DragDropContext>
   );

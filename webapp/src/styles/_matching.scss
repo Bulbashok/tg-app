@@ -14,13 +14,9 @@
   }
 
   &__head {
+    @include micro-label;
     margin: 0;
-    font-size: 12px;
-    font-weight: 700;
     text-align: center;
-    color: $muted;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
   }
 
   &__item {
@@ -43,11 +39,11 @@
     background: $card;
     border: 1px solid $hairline;
     border-bottom: 3px solid $keycap; // keycap tactility, zero blur
-    border-radius: $radius-md;
+    border-radius: $radius-control;
     cursor: pointer;
     transition:
-      background 0.12s ease,
-      border-color 0.12s ease;
+      background $dur $ease-out,
+      border-color $dur $ease-out;
 
     &:active {
       background: $sand;
@@ -56,15 +52,18 @@
     &.is-selected {
       border-color: $accent;
       border-bottom-color: $accent;
-      background: $sand;
+      background: $accent-soft;
     }
 
-    // Reveal states — flat paper tints with matching crisp frames.
+    // Reveal states — flat paper tints with matching crisp frames. Each
+    // card settles in with a small per-index delay (set inline) so the
+    // check reads as a wave down the column, not a wall flipping at once.
     &.is-correct {
       border-color: $green-border;
       border-bottom-color: $green-border;
       background: $green-bg;
       color: $green;
+      animation: reveal-in $dur-slow $ease-out both;
     }
 
     &.is-wrong {
@@ -72,6 +71,7 @@
       border-bottom-color: $red-border;
       background: $red-bg;
       color: $red;
+      animation: reveal-in $dur-slow $ease-out both;
     }
 
     // Correct partner the student missed: quiet dashed green frame.
@@ -81,6 +81,7 @@
       border-bottom-color: $green-border;
       background: $green-bg;
       color: $green;
+      animation: reveal-in $dur-slow $ease-out both;
     }
   }
 
@@ -182,6 +183,7 @@
     align-items: center;
     gap: 6px;
     flex: 0 0 auto;
+    min-height: 32px;
     padding: 8px 12px;
     font-size: 13px;
     line-height: 1.4;
@@ -190,7 +192,7 @@
     text-overflow: ellipsis;
     border: 1px solid $hairline;
     border-bottom: 3px solid $keycap;
-    border-radius: $radius-md;
+    border-radius: $radius-control;
 
     &.is-ok {
       color: $green;

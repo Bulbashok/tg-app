@@ -72,10 +72,10 @@ export default function WordForm({
             // Width follows the STUDENT'S OWN text, clamped: sizing it to
             // answer.length leaked the expected answer's length, while a
             // constant width hid long typed answers behind a scroll.
-            size={Math.max(
-              12,
-              Math.min(24, (answers[`wf-${item.id}`] ?? "").length + 2),
-            )}
+            // ch + a CSS width transition grows it smoothly, not in snaps.
+            style={{
+              width: `${Math.max(12, Math.min(24, (answers[`wf-${item.id}`] ?? "").length + 2))}ch`,
+            }}
             value={answers[`wf-${item.id}`] ?? ""}
             onChange={(e) => onChange(`wf-${item.id}`, e.target.value)}
             onKeyDown={(e) => {

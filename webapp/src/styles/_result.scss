@@ -3,13 +3,16 @@
 // Result banner shown after "Check answers" --------------------------------
 // Flat paper note with a hairline frame; tone carries the meaning.
 .result {
-  padding: 18px;
-  border-radius: $radius-lg;
+  padding: 20px;
+  border-radius: $radius-card;
   border: 1px solid $hairline;
   background: $card;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  // Settles in instead of popping: 4px rise, no layout impact on siblings
+  // beyond the space the banner already reserves by mounting.
+  animation: result-in $dur-slow $ease-out;
 
   &--perfect {
     background: $green-bg;
@@ -36,9 +39,24 @@
   }
 
   &__score {
-    font-size: 15px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+  }
+
+  // Big serif numeral — the one display-face moment in the result note.
+  &__score-num {
+    font-family: $font-display;
+    font-size: 28px;
     font-weight: 600;
-    opacity: 0.9;
+    line-height: 1.1;
+  }
+
+  &__score-of {
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.75;
   }
 
   // Share of correct answers as a length, redundant with the tone color:
@@ -98,18 +116,25 @@
     margin-top: 4px;
     width: 100%;
     padding: 13px 16px;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     font-family: inherit;
     color: $accent-text;
     background: $accent;
     border: none;
-    border-radius: $radius-md;
+    border-radius: $radius-control;
     border-bottom: 3px solid var(--accent-edge, #1f4019);
     cursor: pointer;
 
     &:active {
       filter: brightness(0.92);
+    }
+
+    &:disabled {
+      color: $disabled-fg;
+      background: $sand;
+      border-bottom-color: $keycap;
+      cursor: not-allowed;
     }
   }
 
@@ -118,5 +143,16 @@
     font-size: 13px;
     line-height: 1.5;
     opacity: 0.85;
+  }
+}
+
+@keyframes result-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

@@ -310,7 +310,12 @@ export default function App() {
         </nav>
       )}
       <header className="app__header">
-        <h1 className="app__title">{exercise.title}</h1>
+        <div className="app__title-row">
+          <h1 className="app__title">{exercise.title}</h1>
+          <span className="app__tag">
+            {exercise.task_type.replace("-", " ")}
+          </span>
+        </div>
         <p className="app__instruction">{exercise.instruction}</p>
         {retryNote && <p className="app__retry-note">🎯 {retryNote}</p>}
         {previewMode && (
@@ -359,15 +364,17 @@ export default function App() {
                 style={{ width: `${pct}%` }}
               />
             </span>
-            {progress.answered > 0 && (
-              <button
-                type="button"
-                className="app__reset"
-                onClick={resetAnswers}
-              >
-                Reset answers
-              </button>
-            )}
+            {/* Always in flow (hidden, not removed) so the track width
+                never jumps when the first answer lands. */}
+            <button
+              type="button"
+              className={`app__reset${progress.answered ? "" : " is-hidden"}`}
+              onClick={resetAnswers}
+              tabIndex={progress.answered ? 0 : -1}
+              aria-hidden={progress.answered === 0}
+            >
+              Reset answers
+            </button>
           </div>
 
           {pending && !mockKey && !previewMode && (
@@ -389,13 +396,20 @@ export default function App() {
             onClick={onCheck}
             disabled={!isComplete(exercise, answers) || submitting}
           >
-            {submitting
-              ? slowSend
-                ? "Waking the server…"
-                : "Saving…"
-              : previewMode
-                ? "Check answers (preview)"
-                : "Check answers"}
+            {submitting ? (
+              <span className="app__saving">
+                {slowSend ? "Waking the server" : "Saving"}
+                <span className="app__dots" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+              </span>
+            ) : previewMode ? (
+              "Check answers (preview)"
+            ) : (
+              "Check answers"
+            )}
           </button>
         </>
       )}

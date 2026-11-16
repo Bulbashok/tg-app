@@ -9,9 +9,14 @@
   --card: #ffffff;
   --sand: #f3f2ee;
   --text: #1c1c1a;
-  --muted: #6e6d68;
+  --muted: #66655f;
   --accent: #2d5a27;
   --accent-text: #ffffff;
+  // Brand-tinted surfaces derived from the live accent + card, so hover /
+  // selected / picked states stay flat and flip with the theme for free.
+  --accent-soft: color-mix(in srgb, var(--accent) 10%, var(--card));
+  --accent-softer: color-mix(in srgb, var(--accent) 6%, var(--card));
+  --disabled-fg: color-mix(in srgb, var(--text) 40%, var(--card));
   --hairline: #e5e3dc;
   --underline: #c9c5b9;
   --keycap: #d6d3c9;
@@ -41,7 +46,7 @@
 :root[data-theme="dark"] {
   --bg: #201f1c;
   --card: #262521;
-  --sand: #2d2c27;
+  --sand: #34322c;
   --text: #eceae3;
   --muted: #9b978d;
   --accent: #7fb37a;
@@ -69,7 +74,7 @@
   :root:not([data-theme="light"]) {
     --bg: #201f1c;
     --card: #262521;
-    --sand: #2d2c27;
+    --sand: #34322c;
     --text: #eceae3;
     --muted: #9b978d;
     --accent: #7fb37a;
@@ -122,18 +127,34 @@ body {
   padding: 20px 16px calc(28px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: $space-4;
 
   &__header {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: $space-2;
+  }
+
+  // Title + task-type tag on one baseline row: the tag says WHAT kind of
+  // exercise this is without stealing a line from the instruction.
+  &__title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: $space-3;
+  }
+
+  &__tag {
+    @include micro-label;
+    flex: 0 0 auto;
   }
 
   &__title {
     margin: 0;
-    font-size: 21px;
-    font-weight: 700;
+    font-family: $font-display;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.25;
     letter-spacing: -0.01em;
   }
 
@@ -209,6 +230,7 @@ body {
 
   &__reset {
     flex: 0 0 auto;
+    min-height: 32px;
     padding: 4px 8px;
     font-size: 13px;
     font-weight: 600;
@@ -221,6 +243,13 @@ body {
 
     &:active {
       background: $sand;
+    }
+
+    // Reserved slot: hidden in place, never removed from the flow, so the
+    // progress track keeps its width when the first answer lands.
+    &.is-hidden {
+      visibility: hidden;
+      pointer-events: none;
     }
   }
 
@@ -250,25 +279,66 @@ body {
   &__submit {
     width: 100%;
     padding: 15px 16px;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
+    letter-spacing: 0.01em;
     font-family: inherit;
     color: $accent-text;
     background: $accent;
     border: none;
-    border-radius: $radius-md;
+    border-radius: $radius-control;
     border-bottom: 3px solid var(--accent-edge, #1f4019);
     cursor: pointer;
-    transition: filter 0.12s ease;
 
     &:active:not(:disabled) {
       filter: brightness(0.92);
     }
 
+    // Disabled reads as "paper, not yet inked": a flat sand keycap with
+    // muted ink instead of a washed-out ghost of the green button.
     &:disabled {
-      opacity: 0.45;
+      color: $disabled-fg;
+      background: $sand;
+      border-bottom-color: $keycap;
       cursor: not-allowed;
     }
+  }
+
+  // "Saving…" with three pulsing dots — the wait has a visible heartbeat.
+  &__saving {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__dots {
+    display: inline-flex;
+    gap: 4px;
+
+    span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: dot-pulse 1s ease-in-out infinite;
+
+      &:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      &:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+    }
+  }
+}
+
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
   }
 }
 
@@ -325,10 +395,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 18px;
+  padding: 20px;
   background: $card;
   border: 1px solid $hairline;
-  border-radius: $radius-lg;
+  border-radius: $radius-card;
 
   &__line,
   &__block {
@@ -374,6 +444,88 @@ body {
   .skeleton__line,
   .skeleton__block {
     animation: none;
+  }
+}
+
+// Motion & affordance layer --------------------------------------------------
+// Flat rules still hold (no shadows, no gradients): feedback comes from
+// tint, border and a 1px press. Transform never changes layout, so pressing
+// a button cannot shift the page. Hover exists only where a pointer exists.
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid $accent;
+  outline-offset: 2px;
+}
+
+// Keycap press: the surface sinks 1px under the finger. Transform only —
+// shrinking the bottom border would change the height and jump the layout.
+.app__submit,
+.app__pending,
+.result__retry,
+.state__btn {
+  transition:
+    transform 90ms $ease-out,
+    filter $dur $ease-out,
+    background $dur $ease-out,
+    color $dur $ease-out,
+    border-color $dur $ease-out;
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+}
+
+// Hover tints stay off revealed (green/red) cards so feedback is never
+// overwritten by a pointer resting on it.
+@media (hover: hover) {
+  .word-bank__chip:hover:not(:disabled) {
+    background: $accent-softer;
+    border-color: $underline;
+  }
+
+  .sorting__card:hover:not(.is-correct):not(.is-wrong) {
+    border-color: $underline;
+    background: $accent-softer;
+  }
+
+  .matching__item:hover:not(.is-correct):not(.is-wrong):not(.is-answer) {
+    border-color: $underline;
+    background: $accent-softer;
+  }
+
+  .app__reset:hover:not(.is-hidden) {
+    color: $text;
+    border-color: $underline;
+  }
+}
+
+// Counter and score digits must not re-flow as their values change.
+.app__progress-label,
+.result__score {
+  font-variant-numeric: tabular-nums;
+}
+
+// Shared reveal wave: checked cards settle in one after another (the delay
+// is set inline per index). Transform + opacity only — no layout impact.
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

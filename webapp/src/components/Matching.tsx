@@ -77,13 +77,19 @@ export default function Matching({
     <div className="matching">
       <div className="matching__column">
         <h3 className="matching__head">English</h3>
-        {content.pairs.map((p) => {
+        {content.pairs.map((p, idx) => {
           const paired = !!answers[`en-${p.id}`];
           const ok = isPairCorrect(p.id);
           return (
             <button
               type="button"
               key={p.id}
+              // Reveal wave: each row settles in 30ms after the previous.
+              style={
+                revealed
+                  ? { animationDelay: `${Math.min(idx, 8) * 30}ms` }
+                  : undefined
+              }
               className={[
                 "matching__item",
                 selectedEn === p.id ? "is-selected" : "",
@@ -136,6 +142,11 @@ export default function Matching({
             <button
               type="button"
               key={`ru-${p.id}`}
+              style={
+                revealed
+                  ? { animationDelay: `${Math.min(idx, 8) * 30}ms` }
+                  : undefined
+              }
               className={[
                 "matching__item",
                 ownerId != null && !revealed

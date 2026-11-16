@@ -10,8 +10,8 @@
   &__passage {
     background: $card;
     border: 1px solid $hairline;
-    border-radius: $radius-lg;
-    padding: 20px 18px;
+    border-radius: $radius-card;
+    padding: 20px;
     line-height: 2.1; // room for the inline inputs
   }
 
@@ -42,12 +42,15 @@
     justify-content: center;
     gap: 6px;
     width: max-content;
-    max-width: min(300px, 80vw);
+    max-width: min(320px, 80vw);
     padding: 10px;
     background: $card;
     border: 1px solid $hairline;
     border-bottom: 3px solid $keycap;
-    border-radius: $radius-md;
+    border-radius: $radius-control;
+    // Settles in over the gap. `scale` is its own property so it never
+    // fights the inline translateX the viewport clamp sets in JS.
+    animation: picker-in $dur $ease-out;
   }
 
   &__input {
@@ -64,10 +67,19 @@
     border-bottom: 2px solid $underline; // a pencil rule in the workbook
     border-radius: $radius-sm $radius-sm 0 0;
     outline: none;
+    transition:
+      background $dur $ease-out,
+      border-color $dur $ease-out;
 
     &:focus {
       border-bottom-color: $accent;
-      background: $sand;
+      background: $accent-soft;
+    }
+
+    // A picked word just landed here: one brief stronger tint, then back
+    // to the normal (focused) surface. Background only — no layout move.
+    &.is-flash {
+      animation: gap-flash 240ms $ease-out;
     }
 
     &::placeholder {
@@ -93,16 +105,12 @@
 .word-bank {
   background: $card;
   border: 1px solid $hairline;
-  border-radius: $radius-lg;
-  padding: 16px 18px 14px;
+  border-radius: $radius-card;
+  padding: 20px;
 
   &__title {
+    @include micro-label;
     margin: 0 0 12px;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: $muted;
   }
 
   &__chips {
@@ -112,6 +120,9 @@
   }
 
   &__chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px; // comfortable touch target, not a tiny tag
     padding: 8px 14px;
     font-size: 14px;
     font-family: inherit;
@@ -122,12 +133,14 @@
     border-radius: 999px; // pill is fine for small tags
     cursor: pointer;
     transition:
-      background 0.12s ease,
-      border-color 0.12s ease;
+      background $dur $ease-out,
+      border-color $dur $ease-out,
+      transform 90ms $ease-out;
 
     &:active:not(:disabled) {
       background: $card;
       border-color: $underline;
+      transform: translateY(1px);
     }
 
     &:disabled {
@@ -146,5 +159,26 @@
     font-size: 13px;
     line-height: 1.5;
     color: $muted;
+  }
+}
+
+@keyframes picker-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+// Stronger than the focus tint so the landing reads even on a focused gap.
+@keyframes gap-flash {
+  from {
+    background: color-mix(in srgb, var(--accent) 22%, var(--card));
+  }
+  to {
+    background: transparent;
   }
 }

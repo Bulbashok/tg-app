@@ -27,6 +27,10 @@ export default function GapFill({
   const [activeGap, setActiveGap] = useState<number | null>(null);
   // Which gap shows its inline word picker (null = closed).
   const [pickerGap, setPickerGap] = useState<number | null>(null);
+  // Gap that just received a picked word — brief tint so the landing spot
+  // is visible even when the picker covered it.
+  const [flashGap, setFlashGap] = useState<number | null>(null);
+  const flashTimer = useRef<number | null>(null);
   const inputsRef = useRef<Record<number, HTMLInputElement | null>>({});
   // Only one picker is open at a time, so a single ref is enough.
   const pickerRef = useRef<HTMLDivElement | null>(null);
@@ -57,6 +61,14 @@ export default function GapFill({
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, [pickerGap]);
+
+  // Never leave a flash timer running after the view unmounts.
+  useEffect(
+    () => () => {
+      if (flashTimer.current) window.clearTimeout(flashTimer.current);
+    },
+    [],
+  );
 
   // Word bank is shuffled once per mount (answers stay stable across re-renders).
   const bank = useMemo(() => shuffle(content.wordBank), [content.wordBank]);
@@ -125,6 +137,9 @@ export default function GapFill({
     onChange(`gap-${activeGap}`, word);
     haptic("light");
     setPickerGap(null);
+    setFlashGap(activeGap);
+    if (flashTimer.current) window.clearTimeout(flashTimer.current);
+    flashTimer.current = window.setTimeout(() => setFlashGap(null), 260);
   };
 
   return (
@@ -148,6 +163,7 @@ export default function GapFill({
                           ? "is-correct"
                           : "is-wrong"
                         : "",
+                      flashGap === p.gapId ? "is-flash" : "",
                     ].join(" ")}
                     type="text"
                     inputMode="text"

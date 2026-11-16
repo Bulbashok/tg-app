@@ -5,11 +5,11 @@
 .word-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   background: $card;
   border: 1px solid $hairline;
-  border-radius: $radius-lg;
-  padding: 20px 18px 18px;
+  border-radius: $radius-card;
+  padding: 20px;
 
   &__line {
     margin: 0;
@@ -28,7 +28,9 @@
   &__num {
     margin-right: 6px;
     color: $muted;
-    font-weight: 700;
+    font-family: $font-display;
+    font-size: 15px;
+    font-weight: 600;
   }
 
   &__input {
@@ -43,10 +45,16 @@
     border-bottom: 2px solid $underline;
     border-radius: $radius-sm $radius-sm 0 0;
     outline: none;
+    // Width grows with the typed text (set inline in ch); easing it keeps
+    // the sentence from snapping around on every keystroke.
+    transition:
+      width $dur $ease-out,
+      background $dur $ease-out,
+      border-color $dur $ease-out;
 
     &:focus {
       border-bottom-color: $accent;
-      background: $sand;
+      background: $accent-soft;
     }
 
     // Post-submit feedback (same language as gap-fill inputs).
