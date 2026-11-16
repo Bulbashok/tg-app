@@ -41,6 +41,23 @@
     opacity: 0.9;
   }
 
+  // Share of correct answers as a length, redundant with the tone color:
+  // inherits the banner ink, so it reads in every tone and both themes.
+  &__bar {
+    height: 6px;
+    background: $sand;
+    border: 1px solid $hairline;
+    border-radius: 999px;
+    overflow: hidden;
+
+    span {
+      display: block;
+      height: 100%;
+      background: currentColor;
+      opacity: 0.75;
+    }
+  }
+
   &__errors-title {
     margin: 4px 0 0;
     font-size: 12px;

@@ -6,7 +6,13 @@ import { supabase } from "./supabase.js";
 import { storeTelegramPhoto } from "./storage.js";
 import { parseImageToExercise } from "./ai.js";
 import { formatPreview } from "./preview.js";
-import { putDraft, getDraft, popDraft } from "./draftStore.js";
+import {
+  putDraft,
+  getDraft,
+  popDraft,
+  replaceDraft,
+  getDraftImage,
+} from "./draftStore.js";
 import type { ExerciseRow } from "./types.js";
 
 export const bot = new Bot(env.telegramBotToken);
@@ -14,6 +20,16 @@ export const bot = new Bot(env.telegramBotToken);
 /** Mini App URL for inline web_app buttons (must be the app's own domain). */
 function webAppLink(exerciseId: string): string {
   return `${env.webAppUrl}/?exercise=${exerciseId}`;
+}
+
+/** Buttons on a draft preview: approve, re-run vision on the same photo,
+ * or drop it. Shared so every edit of the preview keeps the same actions. */
+function draftKeyboard(draftId: string): InlineKeyboard {
+  return new InlineKeyboard()
+    .text("✅ Confirm & Create", `confirm:${draftId}`)
+    .row()
+    .text("🔁 Re-parse", `reparse:${draftId}`)
+    .text("❌ Cancel", `cancel:${draftId}`);
 }
 
 /** Forwardable/shareable link. If TME_APP_URL is set (BotFather /newapp),
@@ -100,15 +116,10 @@ bot.on("message", async (ctx, next) => {
   try {
     const imageUrl = await storeTelegramPhoto(bot, fileId);
     const draft = await parseImageToExercise(imageUrl);
-    const draftId = putDraft(draft);
-
-    const kb = new InlineKeyboard()
-      .text("✅ Confirm & Create", `confirm:${draftId}`)
-      .row()
-      .text("❌ Cancel", `cancel:${draftId}`);
+    const draftId = putDraft(draft, imageUrl);
 
     await ctx.reply(formatPreview(draft), {
-      reply_markup: kb,
+      reply_markup: draftKeyboard(draftId),
     });
   } catch (err) {
     await ctx.reply(`⚠️ Could not parse this page:\n${describeParseError(err)}`);
@@ -175,11 +186,7 @@ bot.callbackQuery(/^(confirm|cancel):([0-9a-f-]{8})$/, async (ctx: Context) => {
   if (error)
     return ctx.editMessageText(
       `❌ Save failed: ${error.message}\nThe draft is kept — tap ✅ to try again.`,
-      {
-        reply_markup: new InlineKeyboard()
-          .text("✅ Confirm & Create", `confirm:${draftId}`)
-          .text("❌ Cancel", `cancel:${draftId}`),
-      },
+      { reply_markup: draftKeyboard(draftId) },
     );
 
   // Saved for good -> only now the draft may disappear.
@@ -188,6 +195,36 @@ bot.callbackQuery(/^(confirm|cancel):([0-9a-f-]{8})$/, async (ctx: Context) => {
   // Publish -> assign step: tap students to add the exercise to their
   // "My exercises" dashboard; ✅ Done shows the final link message.
   await renderAssignStep(ctx, { id: data.id, title: data.title });
+});
+
+// Re-run vision on the SAME stored photo: a bad parse costs one button tap
+// instead of a re-upload, and the teacher keeps the same preview message.
+bot.callbackQuery(/^reparse:([0-9a-f-]{8})$/, async (ctx: Context) => {
+  if (!isTeacher(ctx.from?.id ?? 0)) return ctx.answerCallbackQuery();
+  const draftId = (ctx.callbackQuery?.data ?? "").split(":")[1];
+  await ctx.answerCallbackQuery();
+
+  const imageUrl = getDraftImage(draftId);
+  if (!imageUrl)
+    return ctx.editMessageText("⌛️ This preview expired. Re-send the photo.");
+
+  await ctx.editMessageText("🤖 Re-parsing the same photo…");
+  try {
+    const draft = await parseImageToExercise(imageUrl);
+    if (!replaceDraft(draftId, draft))
+      return ctx.editMessageText(
+        "⌛️ This preview expired. Re-send the photo.",
+      );
+    await ctx.editMessageText(formatPreview(draft), {
+      reply_markup: draftKeyboard(draftId),
+    });
+  } catch (err) {
+    // The previous draft survives a failed re-parse.
+    await ctx.editMessageText(
+      `⚠️ Re-parse failed:\n${describeParseError(err)}\nThe previous draft is kept.`,
+      { reply_markup: draftKeyboard(draftId) },
+    );
+  }
 });
 
 // --- Library: four task-type tabs over all published exercises --------------
@@ -334,7 +371,11 @@ function publishFinal(ex: { id: string; title: string }): {
   text: string;
   kb: InlineKeyboard;
 } {
-  const kb = new InlineKeyboard().webApp("🎓 Open Exercise", webAppLink(ex.id));
+  const kb = new InlineKeyboard()
+    .webApp("🎓 Open Exercise", webAppLink(ex.id))
+    .row()
+    // Layout check as the student sees it: local scoring, nothing submitted.
+    .webApp("👁 Preview (not saved)", `${webAppLink(ex.id)}&preview=1`);
   if (env.tmeAppUrl)
     kb.row().url(
       "📤 Share with students",

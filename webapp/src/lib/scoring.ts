@@ -104,8 +104,8 @@ export function scoreExercise(
   return { score: `${correct}/${total}`, correct, total, errors };
 }
 
-/** True once the student answered every scorable item (enables the button). */
-export function isComplete(exercise: Exercise, answers: Answers): boolean {
+/** Answer-map keys of every scorable item, in task order. */
+function itemKeys(exercise: Exercise): string[] {
   const ids: string[] = [];
   if (exercise.task_type === "gap-fill")
     (exercise.content as GapFillContent).gaps.forEach((g) =>
@@ -123,5 +123,22 @@ export function isComplete(exercise: Exercise, answers: Answers): boolean {
     (exercise.content as WordFormContent).items.forEach((it) =>
       ids.push(`wf-${it.id}`),
     );
-  return ids.every((id) => (answers[id] ?? "").length > 0);
+  return ids;
+}
+
+/** True once the student answered every scorable item (enables the button). */
+export function isComplete(exercise: Exercise, answers: Answers): boolean {
+  return itemKeys(exercise).every((id) => (answers[id] ?? "").length > 0);
+}
+
+/** "Answered N of M" progress: a disabled button alone never says what is missing. */
+export function answerProgress(
+  exercise: Exercise,
+  answers: Answers,
+): { answered: number; total: number } {
+  const ids = itemKeys(exercise);
+  return {
+    total: ids.length,
+    answered: ids.filter((id) => (answers[id] ?? "").length > 0).length,
+  };
 }

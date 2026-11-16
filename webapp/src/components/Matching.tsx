@@ -109,6 +109,13 @@ export default function Matching({
                   ↔ {letterById[answers[`en-${p.id}`]] ?? "?"}
                 </span>
               ) : null}
+              {/* The right translation, right where the mistake is — the
+                  dashed frame in the other column is too easy to miss. */}
+              {revealed && !ok && (
+                <small className="matching__fix">
+                  → {ruById[String(p.id)]}
+                </small>
+              )}
             </button>
           );
         })}

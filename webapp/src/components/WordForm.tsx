@@ -3,6 +3,7 @@
 // text after the blank and the (hint) word. No word bank — free typing.
 // A textbook sentence may contain several blanks (Q&A line): they share one
 // number — only the first gap shows it, the rest join under a bracket bar.
+import { useRef } from "react";
 import type { WordFormContent } from "../types";
 import type { Answers } from "../lib/scoring";
 import { normText } from "../lib/scoring";
@@ -20,6 +21,8 @@ export default function WordForm({
   revealed,
   onChange,
 }: Props) {
+  const inputsRef = useRef<Record<number, HTMLInputElement | null>>({});
+
   const isCorrect = (id: number) => {
     const item = content.items.find((it) => it.id === id);
     if (!item) return false;
@@ -35,9 +38,15 @@ export default function WordForm({
     return { item, num: sent, cont: item.sentence !== undefined && item.sentence === prev };
   });
 
+  // Enter moves to the next blank — the phone keyboard's "continue" key.
+  const focusNext = (index: number) => {
+    const next = numbered[(index + 1) % numbered.length];
+    inputsRef.current[next.item.id]?.focus();
+  };
+
   return (
     <div className="word-form">
-      {numbered.map(({ item, num, cont }) => (
+      {numbered.map(({ item, num, cont }, index) => (
         <p
           className={[
             "word-form__line",
@@ -48,6 +57,9 @@ export default function WordForm({
           <span className="word-form__num">{cont ? "" : `${num}.`}</span>
           <span>{item.before}&nbsp;</span>
           <input
+            ref={(el) => {
+              inputsRef.current[item.id] = el;
+            }}
             className={[
               "word-form__input",
               revealed ? (isCorrect(item.id) ? "is-correct" : "is-wrong") : "",
@@ -57,11 +69,20 @@ export default function WordForm({
             autoComplete="off"
             autoCapitalize="off"
             spellCheck={false}
-            // Fixed width: sizing the input to answer.length leaked the
-            // expected answer's length to the student before they typed.
-            size={16}
+            // Width follows the STUDENT'S OWN text, clamped: sizing it to
+            // answer.length leaked the expected answer's length, while a
+            // constant width hid long typed answers behind a scroll.
+            size={Math.max(
+              12,
+              Math.min(24, (answers[`wf-${item.id}`] ?? "").length + 2),
+            )}
             value={answers[`wf-${item.id}`] ?? ""}
             onChange={(e) => onChange(`wf-${item.id}`, e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              focusNext(index);
+            }}
             disabled={revealed}
           />
           {item.after && <span>&nbsp;{item.after}</span>}

@@ -1,7 +1,9 @@
 // 'sorting' view: category drop-boxes on top, a vocabulary card pool below.
-// Touch-friendly drag-and-drop via @hello-pangea/dnd (works in Telegram WebView).
+// Touch-friendly drag-and-drop via @hello-pangea/dnd (works in Telegram WebView),
+// plus a tap-to-place path: tap a word, then tap a category. Dragging can be
+// fiddly on a phone, and tapping needs no drag precision at all.
 // After submit, misplaced cards turn red and show their correct category.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import {
   DragDropContext,
   Droppable,
@@ -84,6 +86,46 @@ export default function Sorting({
     [content.words],
   );
 
+  // Tap-to-place: the word waiting for a destination (null = nothing picked).
+  const [picked, setPicked] = useState<string | null>(null);
+
+  /** Move a card to a list, removing it from wherever it currently sits. */
+  const place = (wordId: string, dest: string) => {
+    setLists((prev) => {
+      const next: Lists = {};
+      Object.entries(prev).forEach(([id, words]) => {
+        next[id] = words.filter((w) => w !== wordId);
+      });
+      next[dest] = [...(next[dest] ?? []), wordId];
+      return next;
+    });
+    haptic("medium");
+  };
+
+  const tapCard = (
+    e: MouseEvent,
+    wordId: string,
+    droppableId: string,
+  ) => {
+    // Stop the box handler below from also firing for this tap.
+    e.stopPropagation();
+    if (revealed) return;
+    // Tapping another card while one is picked places the picked one here.
+    if (picked && picked !== wordId) {
+      place(picked, droppableId);
+      setPicked(null);
+      return;
+    }
+    setPicked((cur) => (cur === wordId ? null : wordId));
+    haptic("selection");
+  };
+
+  const tapList = (dest: string) => {
+    if (revealed || !picked) return;
+    place(picked, dest);
+    setPicked(null);
+  };
+
   const catName = (id: string) =>
     content.categories.find((c) => c.id === id)?.name ?? id;
 
@@ -121,7 +163,9 @@ export default function Sorting({
                 "sorting__card",
                 isWrong ? "is-wrong" : "",
                 isRight ? "is-correct" : "",
+                picked === wordId ? "is-picked" : "",
               ].join(" ")}
+              onClick={(e) => tapCard(e, wordId, droppableId)}
             >
               {word.text}
               {isWrong && (
@@ -139,6 +183,12 @@ export default function Sorting({
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="sorting">
+        {picked && !revealed && (
+          <p className="sorting__hint">
+            Tap a category to place “{wordById[picked]?.text}” — or tap the
+            word again to cancel.
+          </p>
+        )}
         {/* Category containers */}
         <div className="sorting__boxes">
           {content.categories.map((cat) => (
@@ -154,7 +204,9 @@ export default function Sorting({
                   className={[
                     "sorting__box",
                     snapshot.isDraggingOver ? "is-over" : "",
+                    picked && !revealed ? "is-target" : "",
                   ].join(" ")}
+                  onClick={() => tapList(cat.id)}
                 >
                   <h4 className="sorting__box-title">{cat.name}</h4>
                   {lists[cat.id]?.map((id, i) => renderCard(id, i, cat.id))}
@@ -178,7 +230,9 @@ export default function Sorting({
               className={[
                 "sorting__pool",
                 snapshot.isDraggingOver ? "is-over" : "",
+                picked && !revealed ? "is-target" : "",
               ].join(" ")}
+              onClick={() => tapList(POOL)}
             >
               {lists[POOL]?.map((id, i) => renderCard(id, i, POOL))}
               {provided.placeholder}

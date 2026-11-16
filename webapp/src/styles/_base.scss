@@ -163,6 +163,87 @@ body {
     gap: 16px;
   }
 
+  // Previous attempt score — quiet chip in the same paper language.
+  &__last {
+    margin: 8px 0 0;
+    display: inline-block;
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: $muted;
+    background: $sand;
+    border: 1px solid $hairline;
+    border-radius: $radius-sm;
+  }
+
+  // "Answered N of M" + a length bar: a disabled button alone never says
+  // what is still missing. The text carries the number, the bar the share.
+  &__progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__progress-label {
+    flex: 0 0 auto;
+    font-size: 13px;
+    font-weight: 600;
+    color: $muted;
+  }
+
+  &__progress-track {
+    flex: 1 1 auto;
+    height: 6px;
+    background: $sand;
+    border: 1px solid $hairline;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  &__progress-fill {
+    display: block;
+    height: 100%;
+    background: $accent;
+    transition: width 0.15s ease;
+  }
+
+  &__reset {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    color: $muted;
+    background: none;
+    border: 1px solid $hairline;
+    border-radius: $radius-sm;
+    cursor: pointer;
+
+    &:active {
+      background: $sand;
+    }
+  }
+
+  // An earlier send that never reached the backend, kept across reloads.
+  &__pending {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    color: $accent;
+    background: $sand;
+    border: 1px solid $hairline;
+    border-bottom: 3px solid $keycap;
+    border-radius: $radius-md;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+
   // Big primary submit button at the end of the flow (not sticky: it is
   // disabled until every item is answered, so pinning it only wastes space).
   // Flat forest green with a hard keycap edge — pressable, not glowing.
@@ -215,6 +296,84 @@ body {
     background: $red-bg;
     border: 1px solid $red-border;
     border-radius: $radius-md;
+  }
+
+  // "Try again" after a failed load — a dead-end error screen is a trap.
+  &__btn {
+    align-self: center;
+    padding: 10px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    color: $accent;
+    background: $card;
+    border: 1px solid $hairline;
+    border-bottom: 3px solid $keycap;
+    border-radius: $radius-md;
+    cursor: pointer;
+
+    &:active {
+      background: $sand;
+    }
+  }
+}
+
+// Loading placeholder in the shape of the task to come: a Render cold start
+// can take ~30 s, and one line of text reads as a broken page for that wait.
+// Flat paper blocks with a gentle opacity pulse — no glow, no gradient.
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  background: $card;
+  border: 1px solid $hairline;
+  border-radius: $radius-lg;
+
+  &__line,
+  &__block {
+    display: block;
+    background: $sand;
+    border: 1px solid $hairline;
+    border-radius: $radius-sm;
+    animation: skeleton-pulse 1.4s ease-in-out infinite;
+  }
+
+  &__line {
+    height: 14px;
+    width: 70%;
+  }
+
+  &__line--title {
+    height: 20px;
+    width: 45%;
+  }
+
+  &__block {
+    height: 64px;
+    width: 100%;
+  }
+
+  &__block--short {
+    height: 44px;
+    width: 80%;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton__line,
+  .skeleton__block {
+    animation: none;
   }
 }
 

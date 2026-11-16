@@ -27,6 +27,9 @@
     position: relative;
     display: flex;
     align-items: center;
+    // Wrap lets the post-reveal "→ correct translation" note take its own
+    // line under the word without touching the reserved right gutter.
+    flex-wrap: wrap;
     gap: 6px;
     min-height: 52px;
     // Right gutter reserved for the pair tag / check mark: text width is
@@ -79,6 +82,17 @@
       background: $green-bg;
       color: $green;
     }
+  }
+
+  // Correct translation shown under a wrong english card after reveal —
+  // same quiet note style as the sorting fix, green ink on the red paper.
+  &__fix {
+    flex: 1 0 100%;
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: $green;
   }
 
   // Position labels: 1..n (English) / A..Z (Russian).

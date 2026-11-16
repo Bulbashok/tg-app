@@ -31,6 +31,26 @@
       border-style: solid;
       background: $sand;
     }
+
+    // Tap-to-place: every box is a possible destination for the picked word.
+    // Solid forest frame — a dashed tint alone was too subtle to notice.
+    &.is-target {
+      border-color: $accent;
+      border-style: solid;
+      background: $sand;
+    }
+  }
+
+  // Instruction line shown only while a word is picked.
+  &__hint {
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: $accent;
+    background: $sand;
+    border: 1px solid $hairline;
+    border-radius: $radius-sm;
   }
 
   &__box-title {
@@ -69,6 +89,10 @@
       border-color: $accent;
       background: $card;
     }
+
+    &.is-target {
+      border-color: $accent;
+    }
   }
 
   &__card {
@@ -103,6 +127,14 @@
       border-bottom-color: $red-border;
       background: $red-bg;
       color: $red;
+    }
+
+    // Picked for tap-to-place: forest frame + tint, no color-only signal
+    // (the hint line above names the word).
+    &.is-picked {
+      border-color: $accent;
+      border-bottom-color: $accent;
+      background: $sand;
     }
   }
 

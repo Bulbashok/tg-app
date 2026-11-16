@@ -94,6 +94,32 @@ export default function GapFill({
       ?.answer.trim()
       .toLowerCase();
 
+  // Gap ids in passage order — Enter jumps to the next blank, the natural
+  // "continue" key on a phone keyboard.
+  const gapOrder = useMemo(
+    () =>
+      lines.flatMap((parts) =>
+        parts.filter((p) => p.type === "gap").map((p) => p.gapId!),
+      ),
+    [lines],
+  );
+
+  const focusNextGap = (id: number) => {
+    const i = gapOrder.indexOf(id);
+    const next = gapOrder[(i + 1) % gapOrder.length];
+    inputsRef.current[next]?.focus();
+  };
+
+  // A bank word already sitting in another gap: dimmed in both the picker
+  // and the bottom bank, still tappable (a word may legitimately repeat).
+  const isUsedElsewhere = (word: string, exceptGap: number | null) =>
+    content.gaps.some(
+      (g) =>
+        g.id !== exceptGap &&
+        (answers[`gap-${g.id}`] ?? "").trim().toLowerCase() ===
+          word.toLowerCase(),
+    );
+
   const applyWord = (word: string) => {
     if (activeGap == null) return;
     onChange(`gap-${activeGap}`, word);
@@ -135,6 +161,12 @@ export default function GapFill({
                       if (!revealed) setPickerGap(p.gapId!);
                     }}
                     onChange={(e) => onChange(`gap-${p.gapId}`, e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      setPickerGap(null);
+                      focusNextGap(p.gapId!);
+                    }}
                   />
                   {pickerGap === p.gapId && !revealed && (
                     <div
@@ -145,12 +177,7 @@ export default function GapFill({
                       onMouseDown={(e) => e.preventDefault()}
                     >
                       {bank.map((w) => {
-                        const used = content.gaps.some(
-                          (g) =>
-                            g.id !== p.gapId &&
-                            (answers[`gap-${g.id}`] ?? "").trim().toLowerCase() ===
-                              w.word.toLowerCase(),
-                        );
+                        const used = isUsedElsewhere(w.word, p.gapId!);
                         return (
                           <button
                             type="button"
@@ -181,7 +208,10 @@ export default function GapFill({
             <button
               type="button"
               key={`${w.id}-${w.word}`}
-              className="word-bank__chip"
+              className={[
+                "word-bank__chip",
+                !revealed && isUsedElsewhere(w.word, null) ? "is-used" : "",
+              ].join(" ")}
               onClick={() => applyWord(w.word)}
               disabled={revealed}
             >

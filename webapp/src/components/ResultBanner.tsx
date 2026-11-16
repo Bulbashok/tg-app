@@ -15,6 +15,8 @@ interface Props {
   // not force the student to solve everything again.
   onResend?: () => void;
   resending?: boolean;
+  // Teacher layout check (?preview=1): local score only, nothing was sent.
+  preview?: boolean;
 }
 
 export default function ResultBanner({
@@ -25,6 +27,7 @@ export default function ResultBanner({
   onRetry,
   onResend,
   resending,
+  preview,
 }: Props) {
   const pct = result.total ? result.correct / result.total : 0;
   const tone = pct === 1 ? "perfect" : pct >= 0.6 ? "good" : "bad";
@@ -44,6 +47,14 @@ export default function ResultBanner({
       <p className="result__score">
         Result: {result.correct} of {result.total}
       </p>
+      {/* Share of correct answers as a length, not only as a tone color. */}
+      <div
+        className="result__bar"
+        role="img"
+        aria-label={`${result.correct} of ${result.total} correct`}
+      >
+        <span style={{ width: `${Math.round(pct * 100)}%` }} />
+      </div>
       {result.errors.length > 0 && (
         <>
           <p className="result__errors-title">Mistakes</p>
@@ -67,13 +78,15 @@ export default function ResultBanner({
         </>
       )}
       <p className="result__status">
-        {notified
-          ? "Result saved and sent to the teacher."
-          : notifyError
-            ? tg?.initData
-              ? "Could not save your result. Your answers are kept — tap Retry sending."
-              : "Open the exercise from the button in the bot message — otherwise the result cannot be saved."
-            : "Saving result…"}
+        {preview
+          ? "Preview only — nothing is sent or saved."
+          : notified
+            ? "Result saved and sent to the teacher."
+            : notifyError
+              ? tg?.initData
+                ? "Could not save your result. Your answers are kept — tap Retry sending."
+                : "Open the exercise from the button in the bot message — otherwise the result cannot be saved."
+              : "Saving result…"}
       </p>
       {notifyError && !notified && onResend && (
         <button
