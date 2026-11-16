@@ -1,17 +1,16 @@
-# Render free tier sleeps after ~15 min without INBOUND HTTP requests, and a
-# sleeping instance means an offline bot plus a dropped grammY long-polling
-# connection (Telegram then queues updates and delivers them in a burst on the
-# ~30s cold start). This workflow is the only traffic the service gets, so it
-# has to fire inside the idle window.
-#
-# Quota: this repo is public, so GitHub-hosted Linux minutes for scheduled
-# jobs are free — 5 min stays safely inside the 15 min idle window. If the
-# repo ever becomes private (2000 min/month), switch the cron to */10.
-name: Keep bot awake
+# NOT the keep-alive anymore: GitHub's scheduler throttles frequent cron
+# workflows, and measurements showed this */5 job actually fired only every
+# 4-8 hours (39 runs in 9 days), which made the bot answer students that late.
+# Real wake-ups come from an external uptime pinger hitting /health every few
+# minutes. This workflow stays as a WATCHDOG: it fails loudly if the backend
+# stops answering, and its push trigger gives a free wake right after a deploy.
+name: Backend watchdog
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    # Sparse on purpose - frequent schedules get throttled AND teach GitHub to
+    # deprioritize this repo's schedules after any cancelled run.
+    - cron: "*/30 * * * *"
   # Manual trigger for testing, plus a wake-up right after every deploy.
   workflow_dispatch:
   push:

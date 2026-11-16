@@ -116,39 +116,50 @@ function extractJson(text: string): unknown {
 export async function parseImageToExercise(
   imageUrl: string,
 ): Promise<ExerciseRow> {
-  const completion = await ai.chat.completions.create({
-    model: env.aiModel,
-    temperature: 0.2, // deterministic structure > creativity here
-    // Capped below Groq's free-tier 1000 OTPM gate; override via
-    // AI_MAX_OUTPUT_TOKENS once billing is upgraded.
-    max_completion_tokens: env.aiMaxOutputTokens,
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+  // Hard time budget: the SDK default is 10 minutes × 4 retries, so an
+  // overloaded provider could leave the teacher staring at "parsing…".
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 90_000);
+  try {
+    const completion = await ai.chat.completions.create(
       {
-        role: "user",
-        content: [
+        model: env.aiModel,
+        temperature: 0.2, // deterministic structure > creativity here
+        // Capped below Groq's free-tier 1000 OTPM gate; override via
+        // AI_MAX_OUTPUT_TOKENS once billing is upgraded.
+        max_completion_tokens: env.aiMaxOutputTokens,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
           {
-            type: "text",
-            text: "Convert this textbook page into one exercise following the contract.",
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Convert this textbook page into one exercise following the contract.",
+              },
+              { type: "image_url", image_url: { url: imageUrl } },
+            ],
           },
-          { type: "image_url", image_url: { url: imageUrl } },
         ],
       },
-    ],
-  });
-
-  const choice = completion.choices[0];
-  if (choice?.finish_reason === "length") {
-    throw new Error(
-      "Задание на скриншоте слишком большое, ответ ИИ обрезался. Сделайте скрин поменьше (меньше пунктов).",
+      { signal: ctrl.signal },
     );
+
+    const choice = completion.choices[0];
+    if (choice?.finish_reason === "length") {
+      throw new Error(
+        "Задание на скриншоте слишком большое, ответ ИИ обрезался. Сделайте скрин поменьше (меньше пунктов).",
+      );
+    }
+
+    const raw = choice?.message?.content;
+    if (!raw) throw new Error("The model returned an empty response");
+
+    // Throws if the model deviated from the contract — caller shows it to the teacher.
+    return parseExerciseDraft(extractJson(raw));
+  } finally {
+    clearTimeout(timer);
   }
-
-  const raw = completion.choices[0]?.message?.content;
-  if (!raw) throw new Error("The model returned an empty response");
-
-  // Throws if the model deviated from the contract — caller shows it to the teacher.
-  return parseExerciseDraft(extractJson(raw));
 }
 
 /**
@@ -188,13 +199,14 @@ export async function generateFormHints(payload: {
       {
         model: env.aiModel,
         temperature: 0.3,
-        // ~1 short sentence per mistake (max 13 items), JSON overhead included.
+        // 13 mistakes × ~60 chars ≈ 260 tokens + JSON overhead: fits the 400
+        // budget. The old 120-char wording overflowed it and lost ALL hints.
         max_completion_tokens: 400,
         messages: [
           {
             role: "system",
             content:
-              `You are an English grammar coach for a student. For every numbered mistake below, write ONE short neutral explanation (max 120 characters, English, plain text) of why the correct form is required in this exact sentence and what the student's form would mean instead. Do not restate the answers, do not praise.\n` +
+              `You are an English grammar coach for a student. For every numbered mistake below, write ONE short neutral explanation (max 60 characters, English, plain text) of why the correct form is required in this exact sentence. Do not restate the answers, do not praise.\n` +
               `Reply with STRICT JSON only: {"hints":[{"id":<taskId>,"why":"..."},...]}\n` +
               `Include one hint object for every mistake id.`,
           },
@@ -205,6 +217,12 @@ export async function generateFormHints(payload: {
     );
     const raw = completion.choices[0]?.message?.content;
     if (!raw) return null;
+    // Truncated JSON is unparseable -> say so in the log instead of silently
+    // returning null and looking like "the model had nothing to explain".
+    if (completion.choices[0]?.finish_reason === "length") {
+      console.warn("form hints truncated by the 400-token budget; dropped");
+      return null;
+    }
     const parsed = extractJson(raw) as {
       hints?: { id?: unknown; why?: unknown }[];
     };

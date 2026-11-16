@@ -22,9 +22,11 @@ export async function storeTelegramPhoto(
   // 2. Upload to Supabase Storage (unique, non-guessable key).
   const ext = (file.file_path?.split(".").pop() ?? "jpg").toLowerCase();
   const path = `${crypto.randomUUID()}.${ext}`;
+  // "image/jpg" is not a real MIME type — some fetchers reject it.
+  const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
   const { error } = await supabase.storage
     .from(env.imageBucket)
-    .upload(path, buffer, { contentType: `image/${ext}`, upsert: false });
+    .upload(path, buffer, { contentType: mime, upsert: false });
   if (error) throw new Error(`Supabase upload failed: ${error.message}`);
 
   // 3. Return the public URL (bucket is public for Groq to read).

@@ -57,8 +57,9 @@ export default function WordForm({
             autoComplete="off"
             autoCapitalize="off"
             spellCheck={false}
-            // Wide enough for the expected answer, so it stays readable.
-            size={Math.max(12, item.answer.length + 2)}
+            // Fixed width: sizing the input to answer.length leaked the
+            // expected answer's length to the student before they typed.
+            size={16}
             value={answers[`wf-${item.id}`] ?? ""}
             onChange={(e) => onChange(`wf-${item.id}`, e.target.value)}
             disabled={revealed}

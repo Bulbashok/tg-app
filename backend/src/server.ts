@@ -37,7 +37,7 @@ app.post("/api/submit", async (req, res) => {
 
   try {
     // Upsert the student, then insert the submission using the service role.
-    const { data: student } = await supabase
+    const { data: student, error: stuErr } = await supabase
       .from("students")
       .upsert(
         { telegram_id: user.id, name: user.name },
@@ -45,14 +45,25 @@ app.post("/api/submit", async (req, res) => {
       )
       .select("id")
       .single();
+    // Ignoring this used to surface as a NOT NULL violation on student_id
+    // and a misleading "processing failed" 502.
+    if (stuErr || !student)
+      throw new Error(
+        `student upsert failed: ${stuErr?.message ?? "no row returned"}`,
+      );
 
     const { error: subErr } = await supabase.from("submissions").insert({
       exercise_id: exerciseId,
-      student_id: student?.id,
+      student_id: student.id,
       score: String(score).slice(0, 20),
       errors: Array.isArray(errors) ? errors : [],
     });
     if (subErr) throw new Error(subErr.message);
+    // The only trace of a successful attempt — needed when a student claims
+    // they submitted but the teacher sees nothing.
+    console.log(
+      `submit ok: student=${user.id} exercise=${exerciseId} score=${score}`,
+    );
 
     // Look up the exercise for a friendly teacher alert; word-form also
     // needs the sentence context (content) to explain each mistake.

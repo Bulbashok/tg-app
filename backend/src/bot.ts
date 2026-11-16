@@ -6,7 +6,7 @@ import { supabase } from "./supabase.js";
 import { storeTelegramPhoto } from "./storage.js";
 import { parseImageToExercise } from "./ai.js";
 import { formatPreview } from "./preview.js";
-import { putDraft, popDraft } from "./draftStore.js";
+import { putDraft, getDraft, popDraft } from "./draftStore.js";
 import type { ExerciseRow } from "./types.js";
 
 export const bot = new Bot(env.telegramBotToken);
@@ -154,7 +154,9 @@ bot.callbackQuery(/^(confirm|cancel):([0-9a-f-]{8})$/, async (ctx: Context) => {
     });
   }
 
-  const draft = popDraft(draftId);
+  // Read WITHOUT removing: a transient Supabase failure must not burn the
+  // draft (the teacher would have to re-send the photo and re-pay tokens).
+  const draft = getDraft(draftId);
   if (!draft)
     return ctx.editMessageText("⌛️ This preview expired. Re-send the photo.");
 
@@ -170,7 +172,18 @@ bot.callbackQuery(/^(confirm|cancel):([0-9a-f-]{8})$/, async (ctx: Context) => {
     .select()
     .single<ExerciseRow>();
 
-  if (error) return ctx.editMessageText(`❌ Save failed: ${error.message}`);
+  if (error)
+    return ctx.editMessageText(
+      `❌ Save failed: ${error.message}\nThe draft is kept — tap ✅ to try again.`,
+      {
+        reply_markup: new InlineKeyboard()
+          .text("✅ Confirm & Create", `confirm:${draftId}`)
+          .text("❌ Cancel", `cancel:${draftId}`),
+      },
+    );
+
+  // Saved for good -> only now the draft may disappear.
+  popDraft(draftId);
 
   // Publish -> assign step: tap students to add the exercise to their
   // "My exercises" dashboard; ✅ Done shows the final link message.
@@ -465,6 +478,12 @@ bot.callbackQuery(/^done:/, async (ctx) => {
       ),
     );
     const sent = results.filter((r) => r.status === "fulfilled").length;
+    // A failed leg is invisible to the teacher otherwise (403 = never pressed
+    // /start, 429 = burst), so name the student ids in the log.
+    results.forEach((r, i) => {
+      if (r.status === "rejected")
+        console.error("student DM failed:", tgIds[i], tgError(r.reason));
+    });
     sentNote =
       sent === tgIds.length
         ? `\n\n📤 Sent to ${sent} student${sent === 1 ? "" : "s"}.`
@@ -600,6 +619,32 @@ bot.command("list", async (ctx) => {
 });
 
 // --- Notify the teacher about a student submission (from the webhook) --------
+
+/** Telegram rejects messages over 4096 chars; 13 word-form mistakes with AI
+ * hints easily reach ~4300, which used to lose the WHOLE report silently.
+ * Split on line boundaries so a mistake and its hint stay together. */
+function splitMessage(text: string, limit = 4000): string[] {
+  if (text.length <= limit) return [text];
+  const out: string[] = [];
+  let rest = text;
+  while (rest.length > limit) {
+    let cut = rest.lastIndexOf("\n", limit);
+    if (cut < limit / 2) cut = limit; // no usable break -> hard cut
+    out.push(rest.slice(0, cut));
+    rest = rest.slice(cut).replace(/^\n+/, "");
+  }
+  if (rest) out.push(rest);
+  return out;
+}
+
+/** grammY wraps API failures in GrammyError; the raw stack hides the cause. */
+function tgError(err: unknown): string {
+  const e = err as { method?: string; error_code?: number; description?: string };
+  if (e?.method)
+    return `${e.method} -> ${e.error_code ?? ""} ${e.description ?? ""}`.trim();
+  return err instanceof Error ? err.message : String(err);
+}
+
 type StudentError = {
   taskId?: unknown;
   /** Asked word (English term / base word / card text); absent for gap-fill. */
@@ -644,8 +689,17 @@ export async function alertTeacher(payload: {
   }
 
   // Every teacher gets the report; one blocked/rate-limited DM must not
-  // swallow the notification for the others.
-  await Promise.allSettled(
-    env.teacherIds.map((id) => bot.api.sendMessage(Number(id), text)),
+  // swallow the notification for the others. Chunks go in order per teacher.
+  const parts = splitMessage(text);
+  const results = await Promise.allSettled(
+    env.teacherIds.map(async (id) => {
+      for (const part of parts) await bot.api.sendMessage(Number(id), part);
+    }),
   );
+  // allSettled never throws, so without this a 400/403/429 vanished without
+  // a trace and the teacher simply never saw the result.
+  results.forEach((r, i) => {
+    if (r.status === "rejected")
+      console.error("teacher DM failed:", env.teacherIds[i], tgError(r.reason));
+  });
 }

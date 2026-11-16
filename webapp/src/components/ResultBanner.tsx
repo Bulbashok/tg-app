@@ -11,6 +11,10 @@ interface Props {
   // Reopen the exercise with only these mistakes (?retry=last). Shown only
   // after the submission is saved — the retry list reads it from the DB.
   onRetry?: () => void;
+  // Re-send the SAME attempt after a failed submit, so a network blip does
+  // not force the student to solve everything again.
+  onResend?: () => void;
+  resending?: boolean;
 }
 
 export default function ResultBanner({
@@ -19,6 +23,8 @@ export default function ResultBanner({
   notifyError,
   hints,
   onRetry,
+  onResend,
+  resending,
 }: Props) {
   const pct = result.total ? result.correct / result.total : 0;
   const tone = pct === 1 ? "perfect" : pct >= 0.6 ? "good" : "bad";
@@ -65,10 +71,20 @@ export default function ResultBanner({
           ? "Result saved and sent to the teacher."
           : notifyError
             ? tg?.initData
-              ? "Could not save your result. Check the connection and try again."
+              ? "Could not save your result. Your answers are kept — tap Retry sending."
               : "Open the exercise from the button in the bot message — otherwise the result cannot be saved."
             : "Saving result…"}
       </p>
+      {notifyError && !notified && onResend && (
+        <button
+          type="button"
+          className="result__retry"
+          onClick={onResend}
+          disabled={resending}
+        >
+          {resending ? "Sending…" : "↻ Retry sending"}
+        </button>
+      )}
     </div>
   );
 }

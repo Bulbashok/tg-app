@@ -102,6 +102,32 @@ export default function App() {
 
   const revealed = result !== null;
 
+  // Send an already-scored attempt. Kept separate from onCheck so a failed
+  // send can be retried without solving the exercise again — the score and
+  // the mistake list are already in state.
+  const sendResult = useCallback(
+    async (scored: SubmissionResult) => {
+      if (!exercise || mockKey) return;
+      setSubmitting(true);
+      setNotifyError(false);
+      try {
+        const out = await submitResult({
+          exerciseId: exercise.id,
+          initData: tg?.initData ?? "",
+          score: scored.score,
+          errors: scored.errors,
+        });
+        setNotified(true);
+        setHints(out.hints ?? null);
+      } catch {
+        setNotifyError(true);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [exercise, mockKey],
+  );
+
   const onCheck = async () => {
     if (!exercise) return;
     const scored = scoreExercise(exercise, answers);
@@ -129,21 +155,7 @@ export default function App() {
       }
       return;
     }
-    setSubmitting(true);
-    try {
-      const out = await submitResult({
-        exerciseId: exercise.id,
-        initData: tg?.initData ?? "",
-        score: scored.score,
-        errors: scored.errors,
-      });
-      setNotified(true);
-      setHints(out.hints ?? null);
-    } catch {
-      setNotifyError(true);
-    } finally {
-      setSubmitting(false);
-    }
+    await sendResult(scored);
   };
 
   const view = useMemo(() => {
@@ -217,6 +229,8 @@ export default function App() {
           notified={notified}
           notifyError={notifyError}
           hints={hints}
+          resending={submitting}
+          onResend={mockKey ? undefined : () => sendResult(result)}
           onRetry={
             mockKey
               ? undefined
