@@ -85,14 +85,26 @@ export const MOCK_EXERCISES: Exercise[] = [
       items: [
         {
           id: 1,
-          before: "If it rains tomorrow, we",
-          after: "to the park.",
-          hint: "not / go",
-          answer: "won't go",
-          alt: ["will not go"],
+          sentence: 1,
+          before: "Your brother",
+          after: "a student now.",
+          hint: "be",
+          answer: "is",
+        },
+        {
+          // Second gap of entry 1 (Q&A short answer): shares sentence 1 so it
+          // stacks under the same number — covers the hanging-indent group.
+          id: 6,
+          sentence: 1,
+          before: "Yes, he",
+          after: "at university.",
+          hint: "study",
+          answer: "studies",
+          alt: ["is studying"],
         },
         {
           id: 2,
+          sentence: 2,
           before: "Look at those dark clouds! It",
           after: "soon.",
           hint: "rain",
@@ -101,6 +113,7 @@ export const MOCK_EXERCISES: Exercise[] = [
         },
         {
           id: 3,
+          sentence: 3,
           before: "She",
           after: "in Minsk since 2020.",
           hint: "live",
@@ -111,6 +124,7 @@ export const MOCK_EXERCISES: Exercise[] = [
           // Blank at the very start of the sentence — the edge case that
           // used to break zod validation; keep it covered in the UI too.
           id: 4,
+          sentence: 4,
           before: "",
           after: "badly hurt in the past, she avoided the topic.",
           hint: "hurt",
@@ -118,6 +132,7 @@ export const MOCK_EXERCISES: Exercise[] = [
         },
         {
           id: 5,
+          sentence: 5,
           before: "This bridge",
           after: "in the 19th century.",
           hint: "build",

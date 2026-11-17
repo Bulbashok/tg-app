@@ -1,34 +1,43 @@
 @use "variables" as *;
 
-// word-form: one frosted pane with numbered sentences + glass inputs -------
+// word-form: one frosted pane with numbered entries + glass inputs ---------
 .word-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px; // breathing room BETWEEN numbered items
   @include glass;
   border-radius: $radius-card;
   padding: 22px;
+
+  // One numbered item = a hanging-indent block: the number sits in its own
+  // column and every sentence of the item aligns under the first line's
+  // text. No ruled bracket — grouping reads from alignment + tight leading.
+  &__entry {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 8px;
+    align-items: start;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px; // sentences of ONE item stay close together
+    min-width: 0;
+  }
 
   &__line {
     margin: 0;
     font-size: 15px;
     line-height: 2.2;
-
-    // Second gap of one textbook sentence (Q&A line): glued to the line
-    // above with a bracket bar on the left instead of a repeated number.
-    &--cont {
-      margin-top: -10px;
-      padding-left: 12px;
-      border-left: 2px solid $hairline;
-    }
   }
 
   &__num {
-    margin-right: 6px;
     color: $muted;
     font-family: $font-display;
     font-size: 15px;
     font-weight: 600;
+    line-height: 2.2; // same line box as the first sentence -> baselines match
   }
 
   &__input {
@@ -42,6 +51,7 @@
     border: 1px solid $underline;
     border-radius: $radius-field;
     outline: none;
+    caret-color: $accent;
     // Width grows with the typed text (set inline in ch); easing it keeps
     // the sentence from snapping around on every keystroke.
     transition:
@@ -50,10 +60,9 @@
       border-color $dur $ease-out,
       box-shadow $dur $ease-out;
 
+    // Same quiet focus as gap-fill: a tint, never a ring.
     &:focus {
-      border-color: $accent;
       background: $accent-softer;
-      box-shadow: 0 0 0 3px $accent-soft;
     }
 
     // Post-submit feedback (same language as gap-fill inputs).

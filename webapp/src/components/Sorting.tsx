@@ -217,6 +217,9 @@ export default function Sorting({
                   className={[
                     "sorting__box",
                     snapshot.isDraggingOver ? "is-over" : "",
+                    // A drag starting here lifts its clone out of the pane;
+                    // the blur must step aside (see .is-dragging in SCSS).
+                    snapshot.draggingFromThisWith ? "is-dragging" : "",
                     picked && !revealed ? "is-target" : "",
                   ].join(" ")}
                   onClick={() => tapList(cat.id)}
@@ -245,6 +248,12 @@ export default function Sorting({
                 className={[
                   "sorting__pool",
                   snapshot.isDraggingOver ? "is-over" : "",
+                  // While a card is lifted from the tray its dnd clone is
+                  // position:fixed — but backdrop-filter makes the tray its
+                  // containing block, trapping the clone deep inside the
+                  // pool and inflating its scroll area. Dropping the blur
+                  // for the duration of the drag frees the clone.
+                  snapshot.draggingFromThisWith ? "is-dragging" : "",
                   picked && !revealed ? "is-target" : "",
                 ].join(" ")}
                 onClick={() => tapList(POOL)}

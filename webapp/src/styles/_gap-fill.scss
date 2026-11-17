@@ -62,15 +62,20 @@
     border: 1px solid $underline;
     border-radius: $radius-field;
     outline: none;
+    caret-color: $accent;
     transition:
       background $dur $ease-out,
       border-color $dur $ease-out,
       box-shadow $dur $ease-out;
 
+    // Focus is a quiet tint only — no ring, no border swap. The number
+    // placeholder steps aside so the caret never crosses it.
     &:focus {
-      border-color: $accent;
       background: $accent-softer;
-      box-shadow: 0 0 0 3px $accent-soft;
+    }
+
+    &:focus::placeholder {
+      opacity: 0;
     }
 
     // A picked word just landed here: one brief tint, then back to the
@@ -81,6 +86,7 @@
 
     &::placeholder {
       color: $muted;
+      transition: opacity $dur $ease-out;
     }
 
     // Post-submit feedback — tinted glass with crisp rims.

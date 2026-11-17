@@ -5,10 +5,10 @@
 // a dark chat theme (data-theme set by applyTelegramTheme) or, standalone,
 // when the OS is dark. Both stay luminous — glass needs light behind it.
 :root {
-  --bg: #e9edf5;
-  // Ambient chroma field: peach / sky / mint light sources.
+  --bg: #e9f0ea;
+  // Ambient chroma field: peach / green / mint light sources.
   --blob-1: #ffc9a3;
-  --blob-2: #a5d8ff;
+  --blob-2: #9be0bc;
   --blob-3: #b8f0d2;
 
   --glass: rgba(255, 255, 255, 0.55);
@@ -52,9 +52,9 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #0b0e15;
+  --bg: #0b1210;
   --blob-1: #134e4a;
-  --blob-2: #26306b;
+  --blob-2: #1d4a36;
   --blob-3: #5b3419;
 
   --glass: rgba(24, 27, 36, 0.55);
@@ -89,9 +89,9 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0b0e15;
+    --bg: #0b1210;
     --blob-1: #134e4a;
-    --blob-2: #26306b;
+    --blob-2: #1d4a36;
     --blob-3: #5b3419;
 
     --glass: rgba(24, 27, 36, 0.55);

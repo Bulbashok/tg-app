@@ -21,7 +21,7 @@ export function useTelegramInit() {
     // Match the WebView chrome to OUR ambient palette (not Telegram's
     // cool grays), picked per active color scheme.
     const dark = tg.colorScheme === "dark";
-    const bg = dark ? "#0b0e15" : "#e9edf5";
+    const bg = dark ? "#0b1210" : "#e9f0ea";
     tg.setHeaderColor?.(bg);
     tg.setBackgroundColor?.(bg);
   }, []);

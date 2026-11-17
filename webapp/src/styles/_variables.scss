@@ -8,6 +8,10 @@ $radius-card: 24px;
 $radius-control: 16px;
 $radius-field: 12px;
 
+// One shared word-tile width: a card is the SAME size in the pool and in a
+// category box, so a word never changes shape when it moves between them.
+$tile: 104px;
+
 // 4px spacing scale — every gap/padding picks a step, no odd values.
 $space-1: 4px;
 $space-2: 8px;

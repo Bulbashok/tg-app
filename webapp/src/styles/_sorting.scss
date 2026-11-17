@@ -13,21 +13,28 @@
   }
 
   &__box {
-    // Reserved capacity: three placed cards (even with the post-reveal
-    // "→ category" note) fit without growing, so placing a word never
-    // pushes the pool / progress / submit button down the screen.
-    min-height: 220px;
+    // Reserved capacity: three placed tiles (even wrapped two-line ones or
+    // with the post-reveal "→ category" note) fit without growing, so
+    // placing a word never pushes the pool / progress / submit down.
+    min-height: 240px;
     padding: 12px;
     border: 1px dashed $underline;
     border-radius: 22px;
     display: flex;
     flex-direction: column;
+    align-items: center; // tiles keep the shared $tile width, centered
     gap: 8px;
     @include glass($glass, 12px);
     transition:
       border-color $dur $ease-out,
       background $dur $ease-out,
       box-shadow $dur $ease-out;
+
+    // Same tile geometry as the pool: a word keeps its exact size when it
+    // lands here instead of stretching to the box width.
+    .sorting__card {
+      width: $tile;
+    }
 
     &.is-over {
       border-color: $accent;
@@ -40,6 +47,14 @@
       border-color: $accent;
       border-style: solid;
       background: $accent-softer;
+    }
+
+    // backdrop-filter turns the pane into the containing block for its
+    // fixed-position dnd clone, misplacing the lifted card. While a drag
+    // starts here, trade the blur for the plain translucent fill.
+    &.is-dragging {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
     }
   }
 
@@ -102,9 +117,10 @@
   // so the layout is frozen mid-drag and extra words just scroll.
   &__pool {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    grid-template-columns: repeat(auto-fill, $tile); // same tile as the boxes
     grid-auto-rows: minmax(44px, auto);
     align-content: start; // keep rows content-sized; empty space stays below
+    align-items: start; // each tile keeps its own height, not the row's
     gap: 8px;
     height: 178px; // 3 rows + padding — fixed so nothing re-measures mid-drag
     padding: 14px;
@@ -122,6 +138,15 @@
     &.is-target {
       border-color: $accent;
       background: $accent-softer;
+    }
+
+    // Same containing-block trap as the boxes: with the blur on, the lifted
+    // card's fixed clone is positioned relative to the tray — it lands deep
+    // below the pool and stretches its scroll area (scrollbar + jump). No
+    // blur mid-drag keeps the clone under the finger and the tray frozen.
+    &.is-dragging {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
     }
   }
 
