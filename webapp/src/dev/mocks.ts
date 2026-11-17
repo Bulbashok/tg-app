@@ -138,6 +138,37 @@ export const MOCK_EXERCISES: Exercise[] = [
           hint: "build",
           answer: "was built",
         },
+        {
+          // Raw AI-style defect kept on purpose: the (HINT) token leaked into
+          // `after`, which used to print the hint twice. normalizeExercise()
+          // must strip it at load time.
+          id: 7,
+          sentence: 6,
+          before: "Thank you so much for your help, it was really",
+          after: "(USE).",
+          hint: "USE",
+          answer: "useful",
+        },
+        {
+          // Second raw defect: the phrase between the two blanks is copied
+          // into BOTH `after` and the next `before`. The load-time sanitizer
+          // keeps it once, in the continuation line's `before`.
+          id: 8,
+          sentence: 7,
+          before: "She",
+          after: "a beautiful dream when the alarm clock",
+          hint: "have",
+          answer: "was having",
+          alt: ["had"],
+        },
+        {
+          id: 9,
+          sentence: 7,
+          before: "when the alarm clock",
+          after: ".",
+          hint: "ring",
+          answer: "rang",
+        },
       ],
     },
   },

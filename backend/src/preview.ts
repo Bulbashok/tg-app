@@ -1,5 +1,6 @@
 // Renders an AI draft as human-readable Telegram text for teacher approval.
 import type { ExerciseRow } from "./types.js";
+import { normalizeWordFormItems } from "./types.js";
 import type {
   GapFillContent,
   MatchingContent,
@@ -37,6 +38,9 @@ export function formatPreview(ex: ExerciseRow): string {
     }
     case "word-form": {
       const c = ex.content as WordFormContent;
+      // Stored rows parsed before the sanitization fix still carry duplicated
+      // hints/phrases; repair in memory so approval text matches the student.
+      normalizeWordFormItems(c.items);
       const rows = c.items.map((it, i) => {
         const alt = it.alt?.length ? ` | also: ${it.alt.join(", ")}` : "";
         // Same numbering the student sees: entry number, '-' for a second

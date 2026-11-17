@@ -79,9 +79,13 @@ export default function App() {
   // or straight from the bundled mocks in dev ?mock= mode.
   useEffect(() => {
     if (mockKey) {
+      // Same load-time repair path as real rows, so fixtures can carry raw
+      // AI-style defects and prove the sanitizer catches them.
       setExercise(
-        MOCK_EXERCISES.find((e) => e.task_type === mockKey) ??
-          MOCK_EXERCISES[0],
+        normalizeExercise(
+          MOCK_EXERCISES.find((e) => e.task_type === mockKey) ??
+            MOCK_EXERCISES[0],
+        ),
       );
       return;
     }

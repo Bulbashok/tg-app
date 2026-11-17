@@ -62,7 +62,7 @@ export default function WordForm({
           <div className="word-form__body">
             {entry.gaps.map(({ item, index }) => (
               <p className="word-form__line" key={item.id}>
-                <span>{item.before}&nbsp;</span>
+                {item.before && <span>{item.before}&nbsp;</span>}
                 <input
                   ref={(el) => {
                     inputsRef.current[item.id] = el;
@@ -92,8 +92,16 @@ export default function WordForm({
                   }}
                   disabled={revealed}
                 />
-                {item.after && <span>&nbsp;{item.after}</span>}
+                {/* Hint sits right after its blank, textbook-style; the rest
+                    of the sentence follows it. No leading space when `after`
+                    starts with punctuation ("… (USE)."). */}
                 <span className="word-form__hint">({item.hint})</span>
+                {item.after && (
+                  <span>
+                    {/^[.,;:!?…)\]]/.test(item.after) ? "" : "\u00A0"}
+                    {item.after}
+                  </span>
+                )}
                 {revealed && !isCorrect(item.id) && (
                   <span className="word-form__answer">→ {item.answer}</span>
                 )}
