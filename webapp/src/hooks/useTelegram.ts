@@ -18,10 +18,10 @@ export function useTelegramInit() {
     if (!tg) return; // opened in a normal browser (local dev)
     tg.ready();
     tg.expand();
-    // Match the WebView chrome to OUR warm paper palette (not Telegram's
+    // Match the WebView chrome to OUR ambient palette (not Telegram's
     // cool grays), picked per active color scheme.
     const dark = tg.colorScheme === "dark";
-    const bg = dark ? "#201f1c" : "#faf9f6";
+    const bg = dark ? "#0b0e15" : "#e9edf5";
     tg.setHeaderColor?.(bg);
     tg.setBackgroundColor?.(bg);
   }, []);

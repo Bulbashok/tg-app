@@ -1,7 +1,6 @@
 @use "variables" as *;
 
-// sorting: category drop-boxes (top) + draggable word cards (bottom) --------
-// Flat workbook look: hairline dashed zones, keycap word tiles.
+// sorting: glass category drop-panes (top) + draggable word tiles (bottom) --
 .sorting {
   display: flex;
   flex-direction: column;
@@ -19,15 +18,16 @@
     // pushes the pool / progress / submit button down the screen.
     min-height: 220px;
     padding: 12px;
-    background: $card;
     border: 1px dashed $underline;
-    border-radius: $radius-card;
+    border-radius: 22px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    @include glass($glass, 12px);
     transition:
       border-color $dur $ease-out,
-      background $dur $ease-out;
+      background $dur $ease-out,
+      box-shadow $dur $ease-out;
 
     &.is-over {
       border-color: $accent;
@@ -36,7 +36,6 @@
     }
 
     // Tap-to-place: every box is a possible destination for the picked word.
-    // Solid forest frame — a dashed tint alone was too subtle to notice.
     &.is-target {
       border-color: $accent;
       border-style: solid;
@@ -44,20 +43,19 @@
     }
   }
 
-  // Instruction slot with a RESERVED height: it is always in the flow and
-  // only swaps its text, so picking a word never shifts the board.
+  // Instruction slot with a RESERVED height: always in the flow, only swaps
+  // its text, so picking a word never shifts the board.
   &__hint {
     margin: 0;
     height: 56px; // two lines of 13px/1.45 + padding, clamped below
-    padding: 8px 12px;
+    padding: 8px 14px;
     display: flex;
     align-items: center;
     font-size: 13px;
     line-height: 1.45;
     color: $muted;
-    background: $sand;
-    border: 1px solid $hairline;
-    border-radius: $radius-sm;
+    border-radius: 14px;
+    @include glass($glass, 10px);
     transition:
       color $dur $ease-out,
       border-color $dur $ease-out;
@@ -111,16 +109,14 @@
     height: 178px; // 3 rows + padding — fixed so nothing re-measures mid-drag
     padding: 14px;
     overflow-y: auto;
-    background: $sand;
-    border: 1px solid $hairline;
-    border-radius: $radius-card;
+    border-radius: 22px;
+    @include glass($glass-strong, 14px);
     transition:
       border-color $dur $ease-out,
       background $dur $ease-out;
 
     &.is-over {
       border-color: $accent;
-      background: $card;
     }
 
     &.is-target {
@@ -139,15 +135,14 @@
     padding: 8px 12px;
     font-size: 14px;
     font-weight: 600;
-    background: $card;
-    border: 1px solid $hairline;
-    border-bottom: 3px solid $keycap; // physical card edge
-    border-radius: $radius-control;
+    border-radius: 14px;
     cursor: grab;
     user-select: none;
+    @include glass($glass, 6px);
     transition:
       background $dur $ease-out,
-      border-color $dur $ease-out;
+      border-color $dur $ease-out,
+      box-shadow $dur $ease-out;
 
     &:active {
       cursor: grabbing;
@@ -157,7 +152,6 @@
     // the check, so the animation's transform never fights dnd.
     &.is-correct {
       border-color: $green-border;
-      border-bottom-color: $green-border;
       background: $green-bg;
       color: $green;
       animation: reveal-in $dur-slow $ease-out both;
@@ -165,18 +159,19 @@
 
     &.is-wrong {
       border-color: $red-border;
-      border-bottom-color: $red-border;
       background: $red-bg;
       color: $red;
       animation: reveal-in $dur-slow $ease-out both;
     }
 
-    // Picked for tap-to-place: forest frame + tint, no color-only signal
-    // (the hint line above names the word).
+    // Picked for tap-to-place: emerald frame + tint + ring; the hint line
+    // above names the word, so color is never the only signal.
     &.is-picked {
       border-color: $accent;
-      border-bottom-color: $accent;
       background: $accent-soft;
+      box-shadow:
+        0 0 0 3px $accent-softer,
+        inset 0 1px 0 $glass-edge;
     }
   }
 

@@ -1,17 +1,15 @@
 @use "variables" as *;
 
-// Result banner shown after "Check answers" --------------------------------
-// Flat paper note with a hairline frame; tone carries the meaning.
+// Result banner shown after "Check answers" — a tinted glass slab. ---------
 .result {
-  padding: 20px;
+  padding: 22px;
   border-radius: $radius-card;
-  border: 1px solid $hairline;
-  background: $card;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  // Settles in instead of popping: 4px rise, no layout impact on siblings
-  // beyond the space the banner already reserves by mounting.
+  @include glass;
+  // Settles in instead of popping: small rise + scale, no layout impact on
+  // siblings beyond the space the banner already reserves by mounting.
   animation: result-in $dur-slow $ease-out;
 
   &--perfect {
@@ -20,9 +18,9 @@
     color: $green;
   }
 
-  // "Good" stays neutral paper with a forest left rule — no blue.
+  // "Good" stays neutral glass with an emerald rim — no tone color needed.
   &--good {
-    border-left: 3px solid $accent;
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
     color: $text;
   }
 
@@ -48,7 +46,7 @@
   // Big serif numeral — the one display-face moment in the result note.
   &__score-num {
     font-family: $font-display;
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 600;
     line-height: 1.1;
   }
@@ -62,27 +60,27 @@
   // Share of correct answers as a length, redundant with the tone color:
   // inherits the banner ink, so it reads in every tone and both themes.
   &__bar {
-    height: 6px;
+    height: 8px;
     background: $sand;
-    border: 1px solid $hairline;
+    border: 1px solid $glass-border;
     border-radius: 999px;
     overflow: hidden;
 
     span {
       display: block;
       height: 100%;
+      border-radius: 999px;
       background: currentColor;
       opacity: 0.75;
+      transition: width 0.3s $ease-out;
     }
   }
 
   &__errors-title {
+    @include micro-label;
     margin: 4px 0 0;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    opacity: 0.75;
+    color: inherit;
+    opacity: 0.7;
   }
 
   &__errors {
@@ -110,30 +108,33 @@
     opacity: 0.85;
   }
 
-  // "Practice mistakes" CTA — forest primary button, same keycap edge as
-  // the main submit; tone-independent so it never blends into red paper.
+  // "Practice mistakes" CTA — the same liquid gradient as the main submit,
+  // tone-independent so it never blends into red glass.
   &__retry {
     margin-top: 4px;
     width: 100%;
-    padding: 13px 16px;
+    padding: 14px 16px;
     font-size: 16px;
     font-weight: 700;
     font-family: inherit;
     color: $accent-text;
-    background: $accent;
+    background: linear-gradient(135deg, $accent, $accent-2);
     border: none;
     border-radius: $radius-control;
-    border-bottom: 3px solid var(--accent-edge, #1f4019);
     cursor: pointer;
+    box-shadow:
+      0 8px 24px $accent-glow,
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
 
     &:active {
-      filter: brightness(0.92);
+      filter: brightness(0.95);
     }
 
     &:disabled {
       color: $disabled-fg;
-      background: $sand;
-      border-bottom-color: $keycap;
+      background: $glass;
+      border: 1px solid $glass-border;
+      box-shadow: none;
       cursor: not-allowed;
     }
   }
@@ -149,7 +150,7 @@
 @keyframes result-in {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(6px) scale(0.99);
   }
   to {
     opacity: 1;

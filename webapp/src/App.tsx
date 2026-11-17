@@ -26,6 +26,18 @@ import ResultBanner from "./components/ResultBanner";
 
 const params = () => new URLSearchParams(window.location.search);
 
+// Living light field behind the glass: three drifting chroma blobs + grain.
+// Purely decorative, fixed, transform-only animation (see _base.scss).
+function Ambient() {
+  return (
+    <div className="ambient" aria-hidden="true">
+      <span className="ambient__blob ambient__blob--1" />
+      <span className="ambient__blob ambient__blob--2" />
+      <span className="ambient__blob ambient__blob--3" />
+    </div>
+  );
+}
+
 export default function App() {
   useTelegramInit();
   const exerciseId = useExerciseId();
@@ -250,6 +262,7 @@ export default function App() {
   if (loadError)
     return (
       <div className="app">
+        <Ambient />
         <p className="state state--error">{loadError}</p>
         <button type="button" className="state__btn" onClick={retryLoad}>
           Try again
@@ -259,6 +272,7 @@ export default function App() {
   if (!exercise)
     return (
       <div className="app">
+        <Ambient />
         {/* Shape of the task to come: a cold start can take ~30 s, and a bare
             line of text reads as a broken page for that whole wait. */}
         <div className="skeleton" aria-hidden="true">
@@ -280,6 +294,7 @@ export default function App() {
   if (retryEmpty)
     return (
       <div className="app">
+        <Ambient />
         <p className="state">
           All answers were correct on your last attempt — nothing to practice.
         </p>
@@ -295,6 +310,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <Ambient />
       {mockKey && (
         <nav className="mock-nav">
           <b>mock UI</b>

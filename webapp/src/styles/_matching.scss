@@ -1,7 +1,6 @@
 @use "variables" as *;
 
-// matching: two parallel columns, tap-to-pair -------------------------------
-// Flat editorial: hairline frames, paper tints for feedback — no glows.
+// matching: two parallel columns of glass tiles, tap-to-pair ---------------
 .matching {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -30,37 +29,38 @@
     min-height: 52px;
     // Right gutter reserved for the pair tag / check mark: text width is
     // constant, so nothing re-wraps when a pair is formed or checked.
-    padding: 5px 40px 5px 5px;
+    padding: 5px 40px 5px 6px;
     font-size: 14px;
+    font-weight: 500;
     font-family: inherit;
     line-height: 1.45;
     text-align: left;
     color: $text;
-    background: $card;
-    border: 1px solid $hairline;
-    border-bottom: 3px solid $keycap; // keycap tactility, zero blur
     border-radius: $radius-control;
     cursor: pointer;
+    @include glass($glass, 8px);
     transition:
       background $dur $ease-out,
-      border-color $dur $ease-out;
+      border-color $dur $ease-out,
+      transform 120ms $ease-out,
+      box-shadow $dur $ease-out;
 
     &:active {
-      background: $sand;
+      transform: scale(0.98);
     }
 
     &.is-selected {
       border-color: $accent;
-      border-bottom-color: $accent;
       background: $accent-soft;
+      box-shadow:
+        0 0 0 3px $accent-softer,
+        inset 0 1px 0 $glass-edge;
     }
 
-    // Reveal states — flat paper tints with matching crisp frames. Each
-    // card settles in with a small per-index delay (set inline) so the
-    // check reads as a wave down the column, not a wall flipping at once.
+    // Reveal states — tinted glass with crisp rims. Each card settles in
+    // with a small per-index delay (set inline): a wave down the column.
     &.is-correct {
       border-color: $green-border;
-      border-bottom-color: $green-border;
       background: $green-bg;
       color: $green;
       animation: reveal-in $dur-slow $ease-out both;
@@ -68,7 +68,6 @@
 
     &.is-wrong {
       border-color: $red-border;
-      border-bottom-color: $red-border;
       background: $red-bg;
       color: $red;
       animation: reveal-in $dur-slow $ease-out both;
@@ -78,15 +77,13 @@
     &.is-answer {
       border-style: dashed;
       border-color: $green-border;
-      border-bottom-color: $green-border;
       background: $green-bg;
       color: $green;
       animation: reveal-in $dur-slow $ease-out both;
     }
   }
 
-  // Correct translation shown under a wrong english card after reveal —
-  // same quiet note style as the sorting fix, green ink on the red paper.
+  // Correct translation under a wrong english card after reveal.
   &__fix {
     flex: 1 0 100%;
     margin-top: 2px;
@@ -105,7 +102,7 @@
     flex: 0 0 auto;
     font-size: 11px;
     font-weight: 700;
-    border-radius: $radius-sm;
+    border-radius: 7px;
     background: $sand;
     border: 1px solid $hairline;
     color: $muted;
@@ -120,28 +117,21 @@
     font-weight: 700;
     line-height: 1.2;
     border: 1.5px solid currentColor;
-    border-radius: $radius-sm;
+    border-radius: 7px;
   }
 
-  // ✓ / ✕ shown instead of the tag after "Check answers" — flat ink,
-  // no badge fill, readable in both themes.
+  // ✓ / ✕ shown instead of the tag after "Check answers".
   &__mark {
     flex: 0 0 auto;
     font-size: 15px;
     font-weight: 800;
     line-height: 1;
 
-    &.is-ok {
-      color: $green;
-    }
-
-    &.is-bad {
-      color: $red;
-    }
+    &.is-ok { color: $green; }
+    &.is-bad { color: $red; }
   }
 
-  // Tag & mark sit in the reserved right gutter, vertically centered —
-  // never inline with the word text (strip marks stay inline).
+  // Tag & mark sit in the reserved right gutter, vertically centered.
   .matching__item .matching__tag,
   .matching__item .matching__mark {
     position: absolute;
@@ -152,13 +142,11 @@
 }
 
 // Colored pairing accents while solving: full-tint frame + soft background
-// of the same pair color, so every formed pair reads as one visual unit
-// across both columns (flat color-mix tint, no glow).
+// of the same pair color across both columns (Okabe–Ito, colorblind-safe).
 @each $key, $color in $pair-colors {
   .matching__item.pair-#{$key} {
     border-color: $color !important;
-    border-bottom-color: $color !important;
-    background: color-mix(in srgb, #{$color} 14%, #{$card}) !important;
+    background: color-mix(in srgb, #{$color} 16%, var(--glass)) !important;
   }
   .matching__tag.pair-#{$key} {
     color: $color;
@@ -166,7 +154,7 @@
 }
 
 // Micro horizontal scroll under the columns after reveal: the student's own
-// pairs as swipeable chips with ✓/✕.
+// pairs as swipeable glass chips with ✓/✕.
 .matching__strip {
   grid-column: 1 / -1;
   display: flex;
@@ -175,7 +163,6 @@
   padding: 4px 2px 10px;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
 
   &-item {
     scroll-snap-align: start;
@@ -184,28 +171,25 @@
     gap: 6px;
     flex: 0 0 auto;
     min-height: 32px;
-    padding: 8px 12px;
+    padding: 8px 14px;
     font-size: 13px;
     line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    border: 1px solid $hairline;
-    border-bottom: 3px solid $keycap;
-    border-radius: $radius-control;
+    border-radius: 14px;
+    @include glass($glass, 8px);
 
     &.is-ok {
       color: $green;
       background: $green-bg;
       border-color: $green-border;
-      border-bottom-color: $green-border;
     }
 
     &.is-bad {
       color: $red;
       background: $red-bg;
       border-color: $red-border;
-      border-bottom-color: $red-border;
     }
 
     .matching__num {

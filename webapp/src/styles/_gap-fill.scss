@@ -1,18 +1,16 @@
 @use "variables" as *;
 
-// gap-fill: passage card with inline inputs + "Слова для выбора" box -------
-// Flat paper look: hairline borders, zero shadows, warm accents only.
+// gap-fill: frosted passage pane with inline glass fields + word bank ------
 .gap-fill {
   display: flex;
   flex-direction: column;
   gap: 16px;
 
   &__passage {
-    background: $card;
-    border: 1px solid $hairline;
+    @include glass;
     border-radius: $radius-card;
-    padding: 20px;
-    line-height: 2.1; // room for the inline inputs
+    padding: 22px;
+    line-height: 2.2; // room for the inline fields
   }
 
   &__line {
@@ -29,82 +27,82 @@
     display: inline-block;
   }
 
-  // Word picker popping up right above the tapped gap — chips reuse the
-  // .word-bank__chip look. Flat card, keycap bottom, no shadow.
+  // Word picker popping up right above the tapped gap — a stronger glass
+  // popover with a spring entrance. `scale` is its own property so it never
+  // fights the inline translateX the viewport clamp sets in JS.
   &__picker {
     position: absolute;
-    bottom: calc(100% + 8px);
+    bottom: calc(100% + 10px);
     left: 50%;
     transform: translateX(-50%);
+    transform-origin: bottom center;
     z-index: 20;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     width: max-content;
     max-width: min(320px, 80vw);
-    padding: 10px;
-    background: $card;
-    border: 1px solid $hairline;
-    border-bottom: 3px solid $keycap;
-    border-radius: $radius-control;
-    // Settles in over the gap. `scale` is its own property so it never
-    // fights the inline translateX the viewport clamp sets in JS.
-    animation: picker-in $dur $ease-out;
+    padding: 12px;
+    border-radius: 20px;
+    @include glass($glass-strong, 24px);
+    animation: picker-in 240ms $spring;
   }
 
   &__input {
     display: inline-block;
     width: 110px;
     margin: 0 4px;
-    padding: 4px 8px;
+    padding: 4px 10px;
     font-size: 15px;
     font-family: inherit;
     color: $text;
     text-align: center;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid $underline; // a pencil rule in the workbook
-    border-radius: $radius-sm $radius-sm 0 0;
+    background: $sand;
+    border: 1px solid $underline;
+    border-radius: $radius-field;
     outline: none;
     transition:
       background $dur $ease-out,
-      border-color $dur $ease-out;
+      border-color $dur $ease-out,
+      box-shadow $dur $ease-out;
 
     &:focus {
-      border-bottom-color: $accent;
-      background: $accent-soft;
+      border-color: $accent;
+      background: $accent-softer;
+      box-shadow: 0 0 0 3px $accent-soft;
     }
 
-    // A picked word just landed here: one brief stronger tint, then back
-    // to the normal (focused) surface. Background only — no layout move.
+    // A picked word just landed here: one brief tint, then back to the
+    // normal surface. Background only — no layout move.
     &.is-flash {
-      animation: gap-flash 240ms $ease-out;
+      animation: gap-flash 260ms $ease-out;
     }
 
     &::placeholder {
       color: $muted;
     }
 
-    // Post-submit feedback — flat tints, crisp borders.
+    // Post-submit feedback — tinted glass with crisp rims.
     &.is-correct {
-      border-bottom-color: $green-border;
+      border-color: $green-border;
       background: $green-bg;
       color: $green;
+      box-shadow: none;
     }
 
     &.is-wrong {
-      border-bottom-color: $red-border;
+      border-color: $red-border;
       background: $red-bg;
       color: $red;
       text-decoration: line-through;
+      box-shadow: none;
     }
   }
 }
 
 .word-bank {
-  background: $card;
-  border: 1px solid $hairline;
+  @include glass;
   border-radius: $radius-card;
   padding: 20px;
 
@@ -122,25 +120,23 @@
   &__chip {
     display: inline-flex;
     align-items: center;
-    min-height: 44px; // comfortable touch target, not a tiny tag
-    padding: 8px 14px;
+    min-height: 44px; // comfortable touch target
+    padding: 8px 16px;
     font-size: 14px;
+    font-weight: 600;
     font-family: inherit;
     color: $text;
-    background: $sand;
-    border: 1px solid $hairline;
-    border-bottom-width: 2px; // small keycap heft for tapping
-    border-radius: 999px; // pill is fine for small tags
+    border-radius: 999px;
     cursor: pointer;
+    @include glass($glass, 8px);
     transition:
       background $dur $ease-out,
       border-color $dur $ease-out,
-      transform 90ms $ease-out;
+      transform 120ms $ease-out,
+      box-shadow $dur $ease-out;
 
     &:active:not(:disabled) {
-      background: $card;
-      border-color: $underline;
-      transform: translateY(1px);
+      transform: scale(0.96);
     }
 
     &:disabled {
@@ -165,7 +161,7 @@
 @keyframes picker-in {
   from {
     opacity: 0;
-    scale: 0.98;
+    scale: 0.9;
   }
   to {
     opacity: 1;
@@ -176,7 +172,7 @@
 // Stronger than the focus tint so the landing reads even on a focused gap.
 @keyframes gap-flash {
   from {
-    background: color-mix(in srgb, var(--accent) 22%, var(--card));
+    background: color-mix(in srgb, var(--accent) 26%, transparent);
   }
   to {
     background: transparent;

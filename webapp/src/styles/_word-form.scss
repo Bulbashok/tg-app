@@ -1,20 +1,18 @@
 @use "variables" as *;
 
-// word-form: numbered sentences with free-typed inputs + hint chips --------
-// One calm paper card, hairline frame, pencil-rule inputs.
+// word-form: one frosted pane with numbered sentences + glass inputs -------
 .word-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: $card;
-  border: 1px solid $hairline;
+  @include glass;
   border-radius: $radius-card;
-  padding: 20px;
+  padding: 22px;
 
   &__line {
     margin: 0;
     font-size: 15px;
-    line-height: 2.1;
+    line-height: 2.2;
 
     // Second gap of one textbook sentence (Q&A line): glued to the line
     // above with a bracket bar on the left instead of a repeated number.
@@ -36,43 +34,46 @@
   &__input {
     display: inline-block;
     margin: 0 2px;
-    padding: 3px 8px;
+    padding: 3px 10px;
     font-size: 15px;
     font-family: inherit;
     color: $text;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid $underline;
-    border-radius: $radius-sm $radius-sm 0 0;
+    background: $sand;
+    border: 1px solid $underline;
+    border-radius: $radius-field;
     outline: none;
     // Width grows with the typed text (set inline in ch); easing it keeps
     // the sentence from snapping around on every keystroke.
     transition:
       width $dur $ease-out,
       background $dur $ease-out,
-      border-color $dur $ease-out;
+      border-color $dur $ease-out,
+      box-shadow $dur $ease-out;
 
     &:focus {
-      border-bottom-color: $accent;
-      background: $accent-soft;
+      border-color: $accent;
+      background: $accent-softer;
+      box-shadow: 0 0 0 3px $accent-soft;
     }
 
     // Post-submit feedback (same language as gap-fill inputs).
     &.is-correct {
-      border-bottom-color: $green-border;
+      border-color: $green-border;
       background: $green-bg;
       color: $green;
+      box-shadow: none;
     }
 
     &.is-wrong {
-      border-bottom-color: $red-border;
+      border-color: $red-border;
       background: $red-bg;
       color: $red;
       text-decoration: line-through;
+      box-shadow: none;
     }
   }
 
-  // The base word to transform — quiet italic, not a blue link.
+  // The base word to transform — quiet italic, not a link.
   &__hint {
     margin-left: 6px;
     color: $muted;
@@ -82,6 +83,7 @@
   &__answer {
     margin-left: 8px;
     color: $green;
+    font-size: 14px;
     font-weight: 600;
   }
 }

@@ -1,17 +1,12 @@
-// Design tokens — flat, warm, editorial ("paper workbook") palette.
-// Every color is a CSS custom property defined in _base.scss so the whole
-// surface flips with the light/dark theme; fallbacks mirror LIGHT mode.
-// No elevation shadows, no glows: cards separate via 1px hairline borders,
-// interactive tiles via a hard keycap bottom border.
+// Design tokens — "Liquid Glass" language: frosted translucent panels with
+// specular edges floating over a living ambient light field. Every color is
+// a CSS custom property declared in _base.scss so the whole surface flips
+// with the Telegram light/dark theme; fallbacks mirror LIGHT mode.
 
-// Moderate, clean radii — nothing bubbly. Named by role so new screens
-// pick the right one: fields 6, controls 8, cards 10, pills for chips only.
-$radius-lg: 10px;
-$radius-md: 8px;
-$radius-sm: 6px;
-$radius-card: $radius-lg;
-$radius-control: $radius-md;
-$radius-field: $radius-sm;
+// Generous liquid radii — panels 24, controls 16, fields 12, pills for chips.
+$radius-card: 24px;
+$radius-control: 16px;
+$radius-field: 12px;
 
 // 4px spacing scale — every gap/padding picks a step, no odd values.
 $space-1: 4px;
@@ -21,36 +16,43 @@ $space-4: 16px;
 $space-5: 24px;
 $space-6: 32px;
 
-// Surfaces & ink.
-$bg: var(--bg, #faf9f6); // alabaster paper
-$card: var(--card, #ffffff);
-$sand: var(--sand, #f3f2ee); // soft stone (pools, chips, tints)
-$text: var(--text, #1c1c1a); // soft charcoal, never #000
-$muted: var(--muted, #66655f); // warm gray for hints
-$accent: var(--accent, #2d5a27); // deep forest green
+// Ambient field & ink.
+$bg: var(--bg, #e9edf5);
+$text: var(--text, #171a21);
+$muted: var(--muted, #5b6272);
+
+// Glass material: fill, specular top edge, hairline rim, soft depth.
+$glass: var(--glass);
+$glass-strong: var(--glass-strong);
+$glass-border: var(--glass-border);
+$glass-edge: var(--glass-edge);
+$glass-shadow: var(--glass-shadow);
+$glass-solid: var(--glass-solid); // opaque fallback when blur is unsupported
+
+// Brand: emerald -> sky liquid gradient.
+$accent: var(--accent, #0c9d75);
+$accent-2: var(--accent-2, #2f8fe6);
 $accent-text: var(--accent-text, #ffffff);
-// Brand-tinted surfaces for hover/selected/picked — flat, theme-aware.
 $accent-soft: var(--accent-soft);
 $accent-softer: var(--accent-softer);
+$accent-glow: var(--accent-glow);
 $disabled-fg: var(--disabled-fg);
-$hairline: var(--hairline, #e5e3dc); // 1px borders & dividers
-$underline: var(--underline, #c9c5b9); // unfocused input rules
-$keycap: var(--keycap, #d6d3c9); // hard tactile offset (no blur)
 
-// Semantic feedback — flat paper tints, crisp borders, readable ink.
-$green: var(--ok-fg, #1e4620);
-$green-bg: var(--ok-bg, #eaf4ec);
-$green-border: var(--ok-border, #a3d1ac);
-$red: var(--err-fg, #691e1a);
-$red-bg: var(--err-bg, #fceceb);
-$red-border: var(--err-border, #f0b5b1);
+// Quiet surfaces & rules.
+$sand: var(--sand);
+$hairline: var(--hairline);
+$underline: var(--underline);
 
-// Theme-neutral surfaces kept for older call sites.
-$neutral-soft: $sand;
-$line: $hairline;
+// Semantic feedback — tinted glass, crisp rims, readable ink.
+$green: var(--ok-fg, #14532d);
+$green-bg: var(--ok-bg);
+$green-border: var(--ok-border);
+$red: var(--err-fg, #7f1d1d);
+$red-bg: var(--err-bg);
+$red-border: var(--err-border);
 
-// Pair accents for the matching task: five separated hue families
-// (graphite, blue, orange, green, pink) — re-tuned per theme below.
+// Pair accents for matching: Okabe–Ito hue families (graphite, blue, orange,
+// green, pink) — separable under color-vision deficiency, re-tuned per theme.
 $pair-colors: (
   "a": var(--pair-a, #44413a),
   "b": var(--pair-b, #0072b2),
@@ -61,22 +63,33 @@ $pair-colors: (
 
 $font-stack: "Inter Variable", -apple-system, BlinkMacSystemFont, "Inter",
   "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-// Editorial display face for titles and the result numeral; system serif
-// fallbacks keep the workbook character even before the woff2 arrives.
+// Editorial display face kept for the result numeral and item numbers.
 $font-display: "Source Serif 4", "Iowan Old Style", "Palatino Linotype",
   "Book Antiqua", Georgia, serif;
 
-// One shared micro-label style (WORD BANK, column heads, category names).
+// One shared micro-label style (WORD BANK, WORD POOL, column heads, tag).
 @mixin micro-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: $muted;
 }
 
-// One shared motion language: short, decelerating, never bouncy. Every
-// hover/press/reveal uses these so surfaces feel like the same material.
-$dur: 120ms;
-$dur-slow: 180ms;
-$ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+// The glass material itself. Blur + saturate makes the ambient field glow
+// through; the inset highlight is the specular top edge of a real pane.
+@mixin glass($fill: $glass, $blur: 18px) {
+  background: $fill;
+  -webkit-backdrop-filter: blur($blur) saturate(1.6);
+  backdrop-filter: blur($blur) saturate(1.6);
+  border: 1px solid $glass-border;
+  box-shadow:
+    $glass-shadow,
+    inset 0 1px 0 $glass-edge;
+}
+
+// Motion language: short decelerating moves, one spring for popovers.
+$dur: 160ms;
+$dur-slow: 280ms;
+$ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+$spring: cubic-bezier(0.34, 1.56, 0.64, 1);
