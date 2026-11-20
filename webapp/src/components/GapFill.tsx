@@ -114,6 +114,18 @@ export default function GapFill({
   // Word bank is shuffled once per mount (answers stay stable across re-renders).
   const bank = useMemo(() => shuffle(content.wordBank), [content.wordBank]);
 
+  // Stable per-copy ordinal among same-text bank entries (in shuffled
+  // order), so the dimmed subset never jumps around between renders.
+  const copyOrdinal = useMemo(() => {
+    const seen = new Map<string, number>();
+    return bank.map((w) => {
+      const k = w.word.toLowerCase();
+      const n = seen.get(k) ?? 0;
+      seen.set(k, n + 1);
+      return n;
+    });
+  }, [bank]);
+
   // Split the passage into text/gap segments for every line.
   const lines = useMemo(
     () =>
@@ -163,15 +175,19 @@ export default function GapFill({
     inputsRef.current[next]?.focus();
   };
 
-  // A bank word already sitting in another gap: dimmed in both the picker
-  // and the bottom bank, still tappable (a word may legitimately repeat).
-  const isUsedElsewhere = (word: string, exceptGap: number | null) =>
-    content.gaps.some(
-      (g) =>
-        g.id !== exceptGap &&
-        (answers[`gap-${g.id}`] ?? "").trim().toLowerCase() ===
-          word.toLowerCase(),
-    );
+  // How many copies of each word sit in OTHER gaps: with duplicate bank
+  // entries (phrasal particles like "get" repeat across gaps) only that
+  // many chips dim — matching by text alone struck EVERY copy after one
+  // pick. Dimmed chips stay tappable (a word may legitimately repeat).
+  const usedElsewhere = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const g of content.gaps) {
+      if (g.id === activeGap) continue;
+      const w = (answers[`gap-${g.id}`] ?? "").trim().toLowerCase();
+      if (w) counts.set(w, (counts.get(w) ?? 0) + 1);
+    }
+    return counts;
+  }, [content.gaps, answers, activeGap]);
 
   const applyWord = (word: string) => {
     if (activeGap == null) return;
@@ -236,8 +252,10 @@ export default function GapFill({
                         onMouseDown={(e) => e.preventDefault()}
                       >
                         <div ref={listRef} className="gap-fill__picker-list">
-                          {bank.map((w) => {
-                            const used = isUsedElsewhere(w.word, p.gapId!);
+                          {bank.map((w, i) => {
+                            const used =
+                              copyOrdinal[i] <
+                              (usedElsewhere.get(w.word.toLowerCase()) ?? 0);
                             return (
                               <button
                                 type="button"

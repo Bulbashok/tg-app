@@ -17,13 +17,17 @@ export const MOCK_EXERCISES: Exercise[] = [
     created_at: "2026-01-01T00:00:00Z",
     content: {
       passage:
-        "I am trying to ___1___ enough money to buy a new laptop.\nCan I ___2___ your umbrella? It’s raining outside.\nDon't ___3___ your time watching silly videos all day.\nWe can't ___4___ to go on holiday abroad this year.\nHow much do software developers ___5___ in your city?",
+        "I am trying to ___1___ enough money to buy a new laptop.\nCan I ___2___ your umbrella? It’s raining outside.\nDon't ___3___ your time watching silly videos all day.\nWe can't ___4___ to go on holiday abroad this year.\nHow much do software developers ___5___ in your city?\nThe thieves managed to ___6___ away before the police arrived.\nDid you ___7___ the joke he made at lunch?",
       gaps: [
         { id: 1, answer: "save" },
         { id: 2, answer: "borrow" },
         { id: 3, answer: "waste" },
         { id: 4, answer: "afford" },
         { id: 5, answer: "earn" },
+        // Repeated answer on purpose: duplicate bank entries must dim
+        // per placed copy, not strike every chip sharing the text.
+        { id: 6, answer: "get" },
+        { id: 7, answer: "get" },
       ],
       wordBank: [
         { id: 1, word: "save" },
@@ -48,6 +52,9 @@ export const MOCK_EXERCISES: Exercise[] = [
         { id: 18, word: "refund" },
         { id: 19, word: "salary" },
         { id: 20, word: "debt" },
+        { id: 21, word: "get" },
+        { id: 22, word: "get" },
+        { id: 23, word: "get" },
       ],
     },
   },
