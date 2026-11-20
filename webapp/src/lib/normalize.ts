@@ -10,7 +10,10 @@
 //  * the (HINT) token leaked into `before`/`after`, printing the hint twice;
 //  * the phrase between two gaps of one entry was copied into BOTH the
 //    first gap's `after` and the second gap's `before`.
-import type { Exercise, WordFormContent } from "../types";
+// Choice items get the same dual-sided treatment: stray "/" separators on
+// option edges, duplicate options and answer casing are repaired at read
+// time (mirrors normalizeChoiceItems() in the backend).
+import type { Exercise, WordFormContent, ChoiceContent } from "../types";
 
 const collapseSpace = (s: string) => s.replace(/\s+/g, " ").trim();
 
@@ -39,6 +42,30 @@ function sharedOverlap(a: string, b: string): number {
 }
 
 export function normalizeExercise(ex: Exercise): Exercise {
+  if (ex.task_type === "choice") {
+    const content = ex.content as ChoiceContent;
+    const items = content.items.map((it) => {
+      const seen = new Set<string>();
+      const options = it.options
+        .map((o) => collapseSpace(o.replace(/^\/+|\/+$/g, "")))
+        .filter((o) => {
+          const k = o.toLowerCase();
+          if (!o || seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
+      const answer = collapseSpace(it.answer);
+      const hit = options.find((o) => o.toLowerCase() === answer.toLowerCase());
+      return {
+        ...it,
+        before: collapseSpace(it.before),
+        after: collapseSpace(it.after),
+        options,
+        answer: hit ?? answer,
+      };
+    });
+    return { ...ex, content: { ...content, items } };
+  }
   if (ex.task_type !== "word-form") return ex;
   // Exercise is not a discriminated union, so narrow via an explicit cast.
   const content = ex.content as WordFormContent;

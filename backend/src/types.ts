@@ -7,6 +7,7 @@ export const taskTypeEnum = z.enum([
   "matching",
   "sorting",
   "word-form",
+  "choice",
 ]);
 export type TaskType = z.infer<typeof taskTypeEnum>;
 
@@ -74,6 +75,34 @@ export const wordFormSchema = z.object({
     .min(1),
 });
 
+// "choice": "circle the correct answer" — each sentence prints its
+// alternatives inline (italic, separated by "/" on the page). The student
+// taps one option; `answer` must equal one of the `options` strings.
+export const choiceSchema = z.object({
+  items: z
+    .array(
+      z
+        .object({
+          id: z.number(),
+          // May be empty when the options open the sentence.
+          before: z.string(),
+          options: z.array(z.string().min(1)).min(2).max(4),
+          after: z.string().default(""),
+          answer: z.string().min(1),
+        })
+        .refine(
+          (it) =>
+            it.options.some(
+              (o) =>
+                collapseSpace(o.replace(/^\/+|\/+$/g, "")).toLowerCase() ===
+                collapseSpace(it.answer).toLowerCase(),
+            ),
+          { message: "choice answer must equal one of the options" },
+        ),
+    )
+    .min(1),
+});
+
 export const exerciseDraftSchema = z.object({
   title: z.string().min(1).max(120),
   instruction: z.string().min(1).max(500),
@@ -85,13 +114,19 @@ export type GapFillContent = z.infer<typeof gapFillSchema>;
 export type MatchingContent = z.infer<typeof matchingSchema>;
 export type SortingContent = z.infer<typeof sortingSchema>;
 export type WordFormContent = z.infer<typeof wordFormSchema>;
+export type ChoiceContent = z.infer<typeof choiceSchema>;
 
 export interface ExerciseRow {
   id: string;
   title: string;
   instruction: string;
   task_type: TaskType;
-  content: GapFillContent | MatchingContent | SortingContent | WordFormContent;
+  content:
+    | GapFillContent
+    | MatchingContent
+    | SortingContent
+    | WordFormContent
+    | ChoiceContent;
   created_at: string;
 }
 
@@ -160,6 +195,36 @@ export function normalizeWordFormItems(
   }
 }
 
+/**
+ * Choice items: collapse whitespace, drop stray "/" separators the model
+ * copies into option edges, dedupe identical options (the selection is
+ * stored by text, so duplicates would be ambiguous) and snap `answer` to
+ * the exact option spelling. The webapp mirrors this at load time for rows
+ * stored before the fix. Idempotent.
+ */
+export function normalizeChoiceItems(
+  items: { before: string; after: string; options: string[]; answer: string }[],
+): void {
+  for (const it of items) {
+    it.before = collapseSpace(it.before);
+    it.after = collapseSpace(it.after);
+    const seen = new Set<string>();
+    it.options = it.options
+      .map((o) => collapseSpace(o.replace(/^\/+|\/+$/g, "")))
+      .filter((o) => {
+        const k = o.toLowerCase();
+        if (!o || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    it.answer = collapseSpace(it.answer);
+    const hit = it.options.find(
+      (o) => o.toLowerCase() === it.answer.toLowerCase(),
+    );
+    if (hit) it.answer = hit;
+  }
+}
+
 /** Validate an AI-produced draft; throws with a readable reason on failure. */
 export function parseExerciseDraft(raw: unknown): ExerciseRow {
   const base = exerciseDraftSchema.parse(raw) as {
@@ -173,10 +238,14 @@ export function parseExerciseDraft(raw: unknown): ExerciseRow {
     matching: matchingSchema,
     sorting: sortingSchema,
     "word-form": wordFormSchema,
+    choice: choiceSchema,
   }[base.task_type];
   const content = contentSchema.parse(base.content) as ExerciseRow["content"];
   if (base.task_type === "word-form") {
     normalizeWordFormItems((content as WordFormContent).items);
+  }
+  if (base.task_type === "choice") {
+    normalizeChoiceItems((content as ChoiceContent).items);
   }
   return { ...base, content, id: "", created_at: "" }; // id assigned by Postgres on insert
 }

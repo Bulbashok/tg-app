@@ -1,7 +1,7 @@
 // Retry mode helper: rebuild an exercise keeping ONLY the items the student
 // got wrong in their last attempt. Item ids live under a different content
 // key per task type, but every item carries `id`, so one generic filter
-// covers all four types and the scoring engine never notices the difference.
+// covers all five types and the scoring engine never notices the difference.
 import type { Exercise, GapFillContent } from "../types";
 
 export function filterExerciseToMistakes(
@@ -20,6 +20,7 @@ export function filterExerciseToMistakes(
     matching: "pairs",
     sorting: "words",
     "word-form": "items",
+    choice: "items",
   };
 
   const kept = pick(listKey[exercise.task_type]);

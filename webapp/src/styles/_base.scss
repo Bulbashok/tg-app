@@ -549,6 +549,10 @@ a:focus-visible {
     transform: translateY(-1px);
   }
 
+  .choice__option:hover:not(:disabled) {
+    background: $accent-softer;
+  }
+
   .sorting__card:hover:not(.is-correct):not(.is-wrong) {
     border-color: $underline;
     background: $accent-softer;

@@ -227,12 +227,13 @@ bot.callbackQuery(/^reparse:([0-9a-f-]{8})$/, async (ctx: Context) => {
   }
 });
 
-// --- Library: four task-type tabs over all published exercises --------------
+// --- Library: five task-type tabs over all published exercises -------------
 const LIB_TYPES = [
   { key: "gap-fill", tab: "🧩 Gap", full: "Gap-fill" },
   { key: "matching", tab: "🔗 Match", full: "Matching" },
   { key: "sorting", tab: "🗂 Sort", full: "Sorting" },
   { key: "word-form", tab: "✍ Forms", full: "Word-form" },
+  { key: "choice", tab: "⭕ Choice", full: "Circle the answer" },
 ] as const;
 
 const PAGE_SIZE = 8;

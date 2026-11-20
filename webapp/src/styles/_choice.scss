@@ -1,0 +1,180 @@
+@use "variables" as *;
+
+// choice: "circle the correct answer" — sentences with inline italic
+// alternatives, textbook-style. The pick is a hand-drawn pen ring around
+// the option (sky-blue ink while solving), never a filled chip; reveal
+// re-inks the ring green/red and adds a plain ✓/✕ glyph, so the feedback
+// stays readable without color perception.
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  @include glass;
+  border-radius: $radius-card;
+  padding: 22px;
+
+  // Hanging indent, same reading rhythm as word-form entries.
+  &__entry {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 8px;
+    align-items: start;
+  }
+
+  &__num {
+    color: $muted;
+    font-family: $font-display;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 2.3; // same line box as the sentence -> baselines match
+  }
+
+  &__line {
+    margin: 0;
+    min-width: 0;
+    font-size: 15px;
+    line-height: 2.3; // headroom for the pen ring above/below each option
+  }
+
+  // Keeps "/" glued to its option across line wraps.
+  &__opt-wrap {
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: baseline;
+  }
+
+  &__slash {
+    margin: 0 6px;
+    color: $muted;
+    font-style: italic;
+  }
+
+  &__option {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    margin: 0;
+    padding: 2px 9px;
+    font-family: $font-display;
+    font-size: 15.5px;
+    font-style: italic;
+    color: $text;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition:
+      background $dur $ease-out,
+      color $dur $ease-out,
+      opacity $dur $ease-out,
+      transform $dur $ease-out;
+
+    &:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $accent-2;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      cursor: default;
+    }
+
+    // Reveal: the two touched options keep full ink, the rest recede.
+    &.is-dim {
+      opacity: 0.5;
+    }
+
+    &.is-correct {
+      color: $green;
+      font-weight: 600;
+    }
+
+    &.is-wrong {
+      color: $red;
+    }
+
+    &.is-wrong .choice__text {
+      text-decoration: line-through;
+    }
+  }
+
+  // The pen ring: one overshooting loop drawn on with stroke-dashoffset.
+  // Slight tilt so it reads as hand-set, not as a CSS border ellipse.
+  // Dash geometry lives in viewBox user units (300 > the path's ~293): with
+  // preserveAspectRatio="none" the pattern stretches WITH the path, so the
+  // hidden/drawn states are exact at any option size. (pathLength=1 +
+  // non-scaling-stroke made Chrome phase the dashes in screen space and
+  // leak a stray arc on every un-circled option.) The stretch also varies
+  // stroke weight around the loop — like real pen pressure.
+  &__ring {
+    position: absolute;
+    inset: -3px -5px;
+    width: calc(100% + 10px);
+    height: calc(100% + 6px);
+    overflow: visible;
+    pointer-events: none;
+    transform: rotate(-1.4deg);
+
+    path {
+      fill: none;
+      stroke: $accent-2;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-dasharray: 300;
+      stroke-dashoffset: 300;
+      transition:
+        stroke-dashoffset 340ms $ease-out,
+        stroke $dur $ease-out;
+    }
+  }
+
+  &__option.is-circled &__ring path {
+    stroke-dashoffset: 0;
+  }
+
+  &__option.is-correct &__ring path {
+    stroke: $green;
+    stroke-dashoffset: 0;
+  }
+
+  &__option.is-wrong &__ring path {
+    stroke: $red;
+    stroke-dashoffset: 0;
+  }
+
+  // Plain ✓/✕ glyph (no chip, no glow) — the non-color half of the feedback.
+  // Its width is reserved while solving so reveal never reflows a sentence.
+  &__mark {
+    display: inline-block;
+    width: 12px;
+    margin-left: 2px;
+    font-family: $font-stack;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 700;
+    text-align: center;
+    vertical-align: 2px;
+    opacity: 0;
+    transition: opacity $dur $ease-out;
+
+    &--ok {
+      color: $green;
+      opacity: 1;
+    }
+
+    &--no {
+      color: $red;
+      opacity: 1;
+    }
+  }
+
+  &__hint {
+    margin: 0;
+    color: $muted;
+    font-size: 13px;
+    text-align: center;
+  }
+}

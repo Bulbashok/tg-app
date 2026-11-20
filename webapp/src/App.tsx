@@ -20,6 +20,7 @@ import { MOCK_EXERCISES, mockKeyFromUrl } from "./dev/mocks";
 import type { Exercise, SubmissionResult } from "./types";
 import GapFill from "./components/GapFill";
 import WordForm from "./components/WordForm";
+import Choice from "./components/Choice";
 import Matching from "./components/Matching";
 import Sorting from "./components/Sorting";
 import ResultBanner from "./components/ResultBanner";
@@ -260,6 +261,8 @@ export default function App() {
         return <Sorting content={exercise.content as never} {...props} />;
       case "word-form":
         return <WordForm content={exercise.content as never} {...props} />;
+      case "choice":
+        return <Choice content={exercise.content as never} {...props} />;
     }
   }, [exercise, answers, revealed, setAnswer]);
 

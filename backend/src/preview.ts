@@ -1,11 +1,12 @@
 // Renders an AI draft as human-readable Telegram text for teacher approval.
 import type { ExerciseRow } from "./types.js";
-import { normalizeWordFormItems } from "./types.js";
+import { normalizeWordFormItems, normalizeChoiceItems } from "./types.js";
 import type {
   GapFillContent,
   MatchingContent,
   SortingContent,
   WordFormContent,
+  ChoiceContent,
 } from "./types.js";
 
 export function formatPreview(ex: ExerciseRow): string {
@@ -53,6 +54,19 @@ export function formatPreview(ex: ExerciseRow): string {
       });
       return `${header}\n${rows.join("\n")}\n\n✍️ Ученик печатает ответ сам (без word bank)`;
     }
+    case "choice": {
+      const c = ex.content as ChoiceContent;
+      // Same load-time repair as the student view: stray slashes, duplicate
+      // options and answer casing are fixed before the teacher reads them.
+      normalizeChoiceItems(c.items);
+      const rows = c.items
+        .map(
+          (it, i) =>
+            `${i + 1}) ${it.before} (${it.options.join(" / ")}) ${it.after} — 🔑 ${it.answer}`,
+        )
+        .join("\n");
+      return `${header}\n${rows}\n\n⭕ Ученик обводит один вариант в каждом предложении`;
+    }
   }
 }
 
@@ -67,5 +81,7 @@ export function totalItems(ex: ExerciseRow): number {
       return (ex.content as SortingContent).words.length;
     case "word-form":
       return (ex.content as WordFormContent).items.length;
+    case "choice":
+      return (ex.content as ChoiceContent).items.length;
   }
 }

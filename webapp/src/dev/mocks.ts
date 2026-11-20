@@ -1,6 +1,6 @@
 // Dev-only mock exercises for UI work without backend, Telegram or Supabase.
 // Run `npm run dev` in webapp/ and open:
-//   http://localhost:5173/?mock=matching   (gap-fill | matching | sorting | word-form)
+//   http://localhost:5173/?mock=matching   (gap-fill | matching | sorting | word-form | choice)
 //   http://localhost:5173/?mock            (first exercise)
 // These are plain Exercise objects in the exact shape the AI produces, so
 // every view/scoring path matches production. Mock mode is dev-only: the
@@ -192,6 +192,90 @@ export const MOCK_EXERCISES: Exercise[] = [
           after: ".",
           hint: "ring",
           answer: "rang",
+        },
+      ],
+    },
+  },
+  {
+    id: "mock-choice",
+    title: "Used to / Be used to",
+    instruction: "Circle the correct answer in each sentence.",
+    task_type: "choice",
+    created_at: "2026-01-01T00:00:00Z",
+    content: {
+      items: [
+        {
+          id: 1,
+          before: "When I was a child, I",
+          options: ["didn't use to like", "didn't use to be liking"],
+          after: "vegetables.",
+          answer: "didn't use to like",
+        },
+        {
+          id: 2,
+          before: "It took me a long time",
+          options: ["to be used to working", "to get used to working"],
+          after: "night shifts.",
+          answer: "to get used to working",
+        },
+        {
+          // Raw AI-style defects on purpose: a stray "/" copied onto the
+          // option edge and an UPPER-CASE answer. normalizeExercise() must
+          // strip the slash and snap the answer to the option spelling.
+          id: 3,
+          before: "Maria",
+          options: ["isn't used to live", "isn't used to living /"],
+          after: "with people. She's finding it quite tough.",
+          answer: "ISN'T USED TO LIVING",
+        },
+        {
+          id: 4,
+          before: "Jim",
+          options: ["used to be", "is used to be"],
+          after: "a lawyer. Now he's a professional boxer.",
+          answer: "used to be",
+        },
+        {
+          id: 5,
+          before: "I",
+          options: ["am getting used to drive", "am getting used to driving"],
+          after: "on the left side of the road.",
+          answer: "am getting used to driving",
+        },
+        {
+          id: 6,
+          before: "Be careful of the dog. He",
+          options: ["didn't use to", "isn't used to"],
+          after: "children.",
+          answer: "isn't used to",
+        },
+        {
+          id: 7,
+          before: "Jerry",
+          options: ["didn't used to be", "didn't use to be"],
+          after: "interested in dinosaurs. Now he's fascinated by them.",
+          answer: "didn't use to be",
+        },
+        {
+          id: 8,
+          before: "Sara has been widowed for over 30 years, so she",
+          options: ["is used to be", "is used to being"],
+          after: "alone.",
+          answer: "is used to being",
+        },
+        {
+          id: 9,
+          before: "When I moved to India, I found it hard",
+          options: ["to be used to eating", "to get used to eating"],
+          after: "spicy food.",
+          answer: "to get used to eating",
+        },
+        {
+          id: 10,
+          before: "I lived in England for 10 years, so I",
+          options: ["am used to", "used to"],
+          after: "wet weather.",
+          answer: "am used to",
         },
       ],
     },

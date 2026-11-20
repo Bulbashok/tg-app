@@ -1,5 +1,10 @@
 // Mirror of the backend content schemas (exercises.content jsonb).
-export type TaskType = "gap-fill" | "matching" | "sorting" | "word-form";
+export type TaskType =
+  | "gap-fill"
+  | "matching"
+  | "sorting"
+  | "word-form"
+  | "choice";
 
 export interface GapFillContent {
   passage: string;
@@ -27,13 +32,29 @@ export interface WordFormItem {
 export interface WordFormContent {
   items: WordFormItem[];
 }
+export interface ChoiceItem {
+  id: number;
+  before: string;
+  // Printed alternatives, in page order; the student circles exactly one.
+  options: string[];
+  after: string;
+  answer: string;
+}
+export interface ChoiceContent {
+  items: ChoiceItem[];
+}
 
 export interface Exercise {
   id: string;
   title: string;
   instruction: string;
   task_type: TaskType;
-  content: GapFillContent | MatchingContent | SortingContent | WordFormContent;
+  content:
+    | GapFillContent
+    | MatchingContent
+    | SortingContent
+    | WordFormContent
+    | ChoiceContent;
   created_at: string;
 }
 

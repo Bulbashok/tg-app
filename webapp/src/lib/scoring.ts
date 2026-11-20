@@ -4,6 +4,7 @@
 //   matching : answers["en-<pairId>"]  = chosen russian item id
 //   sorting  : answers["word-<id>"]    = chosen category id
 //   word-form: answers["wf-<id>"]      = freely typed answer (several words ok)
+//   choice   : answers["ch-<id>"]      = text of the circled option
 // This lets App.tsx score any exercise uniformly and produce
 // submissions.errors details for the teacher.
 import type {
@@ -12,6 +13,7 @@ import type {
   MatchingContent,
   SortingContent,
   WordFormContent,
+  ChoiceContent,
   SubmissionResult,
   ErrorDetail,
 } from "../types";
@@ -99,6 +101,22 @@ export function scoreExercise(
       }
       break;
     }
+    case "choice": {
+      const c = exercise.content as ChoiceContent;
+      for (const item of c.items) {
+        total++;
+        const your = answers[`ch-${item.id}`] ?? "";
+        if (norm(your) === norm(item.answer)) correct++;
+        else
+          errors.push({
+            taskId: item.id,
+            label: item.options.join(" / "),
+            your: your || "—",
+            correct: item.answer,
+          });
+      }
+      break;
+    }
   }
 
   return { score: `${correct}/${total}`, correct, total, errors };
@@ -122,6 +140,10 @@ function itemKeys(exercise: Exercise): string[] {
   if (exercise.task_type === "word-form")
     (exercise.content as WordFormContent).items.forEach((it) =>
       ids.push(`wf-${it.id}`),
+    );
+  if (exercise.task_type === "choice")
+    (exercise.content as ChoiceContent).items.forEach((it) =>
+      ids.push(`ch-${it.id}`),
     );
   return ids;
 }
