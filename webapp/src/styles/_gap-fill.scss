@@ -27,26 +27,61 @@
     display: inline-block;
   }
 
-  // Word picker popping up right above the tapped gap — a stronger glass
-  // popover with a spring entrance. `scale` is its own property so it never
-  // fights the inline translateX the viewport clamp sets in JS.
+  // Word picker popping up right at the tapped gap — a stronger glass
+  // popover with a spring entrance. Portaled to <body> and fixed-positioned
+  // by JS: the surrounding glass panes are stacking contexts (backdrop-filter),
+  // so only a top-level layer can stay above them. `scale` is its own
+  // property so the entrance never fights the inline placement.
   &__picker {
-    position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
-    transform: translateX(-50%);
-    transform-origin: bottom center;
-    z-index: 20;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
+    position: fixed;
+    z-index: 60;
     width: max-content;
     max-width: min(320px, 80vw);
     padding: 12px;
     border-radius: 20px;
+    overflow: hidden;
     @include glass($glass-strong, 24px);
     animation: picker-in 240ms $spring;
+  }
+
+  // The scrolling chip list inside the shell. Edge fades appear only while
+  // there is hidden content on that side (data attrs set on scroll).
+  &__picker-list {
+    --fade-top: 0px;
+    --fade-bottom: 0px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-height: 296px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    &[data-fade-top="1"] {
+      --fade-top: 18px;
+    }
+
+    &[data-fade-bottom="1"] {
+      --fade-bottom: 18px;
+    }
+
+    @supports (mask-image: linear-gradient(#000, #000)) {
+      mask-image: linear-gradient(
+        to bottom,
+        transparent 0,
+        #000 var(--fade-top),
+        #000 calc(100% - var(--fade-bottom)),
+        transparent 100%
+      );
+    }
+  }
+
+  &__hint {
+    margin: 0;
+    padding: 0 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: $muted;
   }
 
   &__input {
@@ -107,60 +142,33 @@
   }
 }
 
-.word-bank {
-  @include glass;
-  border-radius: $radius-card;
-  padding: 20px;
+// Picker chips — the single word source now that the bottom bank is gone.
+.gap-fill__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px; // comfortable touch target
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  color: $text;
+  border-radius: 999px;
+  cursor: pointer;
+  @include glass($glass, 8px);
+  transition:
+    background $dur $ease-out,
+    border-color $dur $ease-out,
+    transform 120ms $ease-out,
+    box-shadow $dur $ease-out;
 
-  &__title {
-    @include micro-label;
-    margin: 0 0 12px;
+  &:active {
+    transform: scale(0.96);
   }
 
-  &__chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  &__chip {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px; // comfortable touch target
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    color: $text;
-    border-radius: 999px;
-    cursor: pointer;
-    @include glass($glass, 8px);
-    transition:
-      background $dur $ease-out,
-      border-color $dur $ease-out,
-      transform 120ms $ease-out,
-      box-shadow $dur $ease-out;
-
-    &:active:not(:disabled) {
-      transform: scale(0.96);
-    }
-
-    &:disabled {
-      opacity: 0.5;
-    }
-
-    // Already placed in another gap — dimmed but still tappable (swap).
-    &.is-used {
-      opacity: 0.45;
-      text-decoration: line-through;
-    }
-  }
-
-  &__hint {
-    margin: 12px 0 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: $muted;
+  // Already placed in another gap — dimmed but still tappable (swap).
+  &.is-used {
+    opacity: 0.45;
+    text-decoration: line-through;
   }
 }
 

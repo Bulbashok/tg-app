@@ -1,8 +1,9 @@
-// 'gap-fill' view: passage text interleaved with inputs + a Word Bank box.
-// Tapping a gap opens a word picker right above it (no scrolling to the bank);
-// typing works too and the bottom Word Bank stays as a fallback. After submit,
-// inputs get green/red feedback styling via .is-correct/.is-wrong.
+// 'gap-fill' view: passage text interleaved with inputs. Tapping a gap opens
+// a word picker right above it — the single word source (the old bottom Word
+// Bank was removed); typing works too. After submit, inputs get green/red
+// feedback styling via .is-correct/.is-wrong.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { GapFillContent } from "../types";
 import type { Answers } from "../lib/scoring";
 import { shuffle } from "../lib/utils";
@@ -32,22 +33,61 @@ export default function GapFill({
   const [flashGap, setFlashGap] = useState<number | null>(null);
   const flashTimer = useRef<number | null>(null);
   const inputsRef = useRef<Record<number, HTMLInputElement | null>>({});
-  // Only one picker is open at a time, so a single ref is enough.
+  // Only one picker is open at a time, so a single ref pair is enough:
+  // the glass shell (portal) and its scrolling chip list.
   const pickerRef = useRef<HTMLDivElement | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
-  // Keep the picker inside the viewport: gaps near the screen edges would
-  // otherwise push the centered popup past the border on phones.
+  // The picker lives in a body-level portal: every glass pane around it
+  // (backdrop-filter) is its own stacking context, so an inline popover loses
+  // to later panes no matter its z-index. Fixed positioning + a top-level
+  // z-index keeps it above everything. The same pass caps its height to the
+  // free space and flips it below the gap when above is tighter.
   useLayoutEffect(() => {
-    const el = pickerRef.current;
-    if (pickerGap == null || !el) return;
-    el.style.transform = "translateX(-50%)";
+    const shell = pickerRef.current;
+    const list = listRef.current;
+    const input = pickerGap == null ? null : inputsRef.current[pickerGap];
+    if (pickerGap == null || !shell || !list || !input) return;
     const margin = 8;
-    const rect = el.getBoundingClientRect();
-    let dx = 0;
-    if (rect.left < margin) dx = margin - rect.left;
-    else if (rect.right > window.innerWidth - margin)
-      dx = window.innerWidth - margin - rect.right;
-    if (dx) el.style.transform = `translateX(calc(-50% + ${dx}px))`;
+    const offset = 10; // popover distance from the gap
+    const pad = 24; // shell padding around the scroll list
+    const cap = 296; // list cap -> 320px shell
+    const fades = () => {
+      list.dataset.fadeTop = list.scrollTop > 4 ? "1" : "0";
+      list.dataset.fadeBottom =
+        list.scrollTop + list.clientHeight < list.scrollHeight - 4 ? "1" : "0";
+    };
+    const place = () => {
+      const slot = input.parentElement!.getBoundingClientRect();
+      const above = slot.top - margin - offset;
+      const below = window.innerHeight - margin - offset - slot.bottom;
+      const flip = list.scrollHeight + pad > above && below > above;
+      const space = flip ? below : above;
+      list.style.maxHeight = `${Math.max(96, Math.min(cap, space - pad))}px`;
+      shell.style.transformOrigin = flip ? "top center" : "bottom center";
+      // offsetWidth/Height ignore the entrance scale, so the clamp and the
+      // flip stay exact while the spring animation is still running.
+      const w = shell.offsetWidth;
+      const center = slot.left + slot.width / 2;
+      const left = Math.min(
+        Math.max(center - w / 2, margin),
+        window.innerWidth - margin - w,
+      );
+      shell.style.left = `${left}px`;
+      shell.style.top = `${
+        flip ? slot.bottom + offset : slot.top - offset - shell.offsetHeight
+      }px`;
+      fades();
+    };
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    list.addEventListener("scroll", fades);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+      list.removeEventListener("scroll", fades);
+    };
   }, [pickerGap]);
 
   // Clicking anywhere outside the open picker closes it (mousedown so the
@@ -55,7 +95,8 @@ export default function GapFill({
   useEffect(() => {
     if (pickerGap == null) return;
     const close = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest(".gap-fill__slot"))
+      const t = e.target as HTMLElement;
+      if (!t.closest(".gap-fill__slot") && !t.closest(".gap-fill__picker"))
         setPickerGap(null);
     };
     document.addEventListener("mousedown", close);
@@ -184,32 +225,37 @@ export default function GapFill({
                       focusNextGap(p.gapId!);
                     }}
                   />
-                  {pickerGap === p.gapId && !revealed && (
-                    <div
-                      ref={pickerRef}
-                      className="gap-fill__picker"
-                      // Keep the input focused (and the keyboard open)
-                      // while tapping chips.
-                      onMouseDown={(e) => e.preventDefault()}
-                    >
-                      {bank.map((w) => {
-                        const used = isUsedElsewhere(w.word, p.gapId!);
-                        return (
-                          <button
-                            type="button"
-                            key={`${w.id}-${w.word}`}
-                            className={[
-                              "word-bank__chip",
-                              used ? "is-used" : "",
-                            ].join(" ")}
-                            onClick={() => applyWord(w.word)}
-                          >
-                            {w.word}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  {pickerGap === p.gapId &&
+                    !revealed &&
+                    createPortal(
+                      <div
+                        ref={pickerRef}
+                        className="gap-fill__picker"
+                        // Keep the input focused (and the keyboard open)
+                        // while tapping chips.
+                        onMouseDown={(e) => e.preventDefault()}
+                      >
+                        <div ref={listRef} className="gap-fill__picker-list">
+                          {bank.map((w) => {
+                            const used = isUsedElsewhere(w.word, p.gapId!);
+                            return (
+                              <button
+                                type="button"
+                                key={`${w.id}-${w.word}`}
+                                className={[
+                                  "gap-fill__chip",
+                                  used ? "is-used" : "",
+                                ].join(" ")}
+                                onClick={() => applyWord(w.word)}
+                              >
+                                {w.word}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>,
+                      document.body,
+                    )}
                 </span>
               ),
             )}
@@ -217,30 +263,11 @@ export default function GapFill({
         ))}
       </div>
 
-      <aside className="word-bank">
-        <h3 className="word-bank__title">Word Bank</h3>
-        <div className="word-bank__chips">
-          {bank.map((w) => (
-            <button
-              type="button"
-              key={`${w.id}-${w.word}`}
-              className={[
-                "word-bank__chip",
-                !revealed && isUsedElsewhere(w.word, null) ? "is-used" : "",
-              ].join(" ")}
-              onClick={() => applyWord(w.word)}
-              disabled={revealed}
-            >
-              {w.word}
-            </button>
-          ))}
-        </div>
-        <p className="word-bank__hint">
-          {revealed
-            ? ""
-            : "Tap a gap to pick a word — or type it yourself."}
+      {!revealed && (
+        <p className="gap-fill__hint">
+          Tap a gap to pick a word — or type it yourself.
         </p>
-      </aside>
+      )}
     </div>
   );
 }

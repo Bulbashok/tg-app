@@ -543,7 +543,7 @@ a:focus-visible {
 // Hover lives only where a pointer exists, and never overwrites the
 // green/red reveal states.
 @media (hover: hover) {
-  .word-bank__chip:hover:not(:disabled) {
+  .gap-fill__chip:hover:not(:disabled) {
     background: $accent-softer;
     border-color: $underline;
     transform: translateY(-1px);
@@ -584,25 +584,44 @@ a:focus-visible {
   }
 }
 
-// Scrollbars drawn in the app's own material (pool tray, recap strip).
-.sorting__pool,
-.matching__strip {
-  scrollbar-width: thin;
-  scrollbar-color: $underline transparent;
+// Scrollbars drawn in the app's own material (pool tray, recap strip, picker).
+// Chrome ignores ::-webkit-scrollbar-* once scrollbar-width/color are set and
+// falls back to its standard path (with OS arrow buttons), so the standard
+// properties go only to engines without the webkit pseudos (Firefox).
+@supports not selector(::-webkit-scrollbar) {
+  .sorting__pool,
+  .matching__strip,
+  .gap-fill__picker-list {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
+  }
+}
 
+.sorting__pool,
+.matching__strip,
+.gap-fill__picker-list {
   &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
   }
+  // Chrome keeps default arrow buttons unless explicitly removed.
+  &::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
   &::-webkit-scrollbar-thumb {
-    background: $underline;
+    background: color-mix(in srgb, var(--muted) 45%, transparent);
     border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
 
     &:hover {
-      background: $accent;
+      background: var(--accent);
+      background-clip: padding-box;
     }
   }
 }
